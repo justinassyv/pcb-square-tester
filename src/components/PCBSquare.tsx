@@ -44,7 +44,7 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
         status === 'fail' ? 'text-red-800' : 
         'text-gray-800'
       )}>
-        {number}
+        PCB{number}
       </span>
     </div>
   );

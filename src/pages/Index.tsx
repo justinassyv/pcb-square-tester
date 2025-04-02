@@ -106,7 +106,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+            <div className="flex justify-center space-x-4 mb-8">
               {pcbStatuses.map((status, index) => (
                 <PCBSquare 
                   key={index}
