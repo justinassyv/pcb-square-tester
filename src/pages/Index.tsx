@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PCBSquare from '@/components/PCBSquare';
 import ControlPanel from '@/components/ControlPanel';
@@ -109,6 +110,7 @@ const Index = () => {
   };
   
   const allTested = pcbStatuses.every(status => status !== 'untested');
+  // Fix the counters to directly use the status values instead of test results
   const passCount = pcbStatuses.filter(status => status === 'pass').length;
   const failCount = pcbStatuses.filter(status => status === 'fail').length;
   
