@@ -24,14 +24,11 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
   onClick 
 }) => {
   const getStatusColor = () => {
-    switch (status) {
-      case 'pass':
-        return 'bg-green-50';
-      case 'fail':
-        return 'bg-red-50';
-      default:
-        return 'bg-gray-50';
-    }
+    if (status === 'fail') return 'bg-red-50';
+    
+    const allTestsPassed = testResults.length > 0 && testResults.every(test => test.passed);
+    
+    return allTestsPassed ? 'bg-green-50' : 'bg-red-50';
   };
 
   return (
