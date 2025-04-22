@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PCBSquare from '@/components/PCBSquare';
 import ControlPanel from '@/components/ControlPanel';
@@ -34,7 +33,7 @@ const Index = () => {
     newStatuses[activePCB - 1] = 'pass';
     setPcbStatuses(newStatuses);
     
-    // Simulate random test results
+    // Simulate random test results with high pass rate
     const newResults = [...pcbTestResults];
     newResults[activePCB - 1] = testList.map(test => ({
       ...test,
@@ -56,7 +55,7 @@ const Index = () => {
     newStatuses[activePCB - 1] = 'fail';
     setPcbStatuses(newStatuses);
     
-    // Simulate failed test results
+    // Simulate failed test results with low pass rate
     const newResults = [...pcbTestResults];
     newResults[activePCB - 1] = testList.map(test => ({
       ...test,
@@ -110,7 +109,6 @@ const Index = () => {
   };
   
   const allTested = pcbStatuses.every(status => status !== 'untested');
-  // Fix the counters to directly use the status values instead of test results
   const passCount = pcbStatuses.filter(status => status === 'pass').length;
   const failCount = pcbStatuses.filter(status => status === 'fail').length;
   
