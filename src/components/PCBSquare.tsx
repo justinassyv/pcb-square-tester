@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Check, X } from 'lucide-react';
@@ -51,13 +52,18 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
       
       <div className="space-y-2 text-sm">
         {testResults.map((test, index) => (
-          <div key={index} className="flex items-center justify-between">
+          <div key={index} className="flex items-center gap-3">
+            <div className={cn(
+              "p-1 rounded-full",
+              test.passed ? "bg-green-100" : "bg-red-100"
+            )}>
+              {test.passed ? (
+                <Check className="text-green-600 h-4 w-4" />
+              ) : (
+                <X className="text-red-600 h-4 w-4" />
+              )}
+            </div>
             <span className="text-gray-700">{test.name}</span>
-            {test.passed ? (
-              <Check className="text-green-600 h-4 w-4" />
-            ) : (
-              <X className="text-red-600 h-4 w-4" />
-            )}
           </div>
         ))}
       </div>
