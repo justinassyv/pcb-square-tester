@@ -1,20 +1,45 @@
-
 import React, { useState } from 'react';
 import PCBSquare from '@/components/PCBSquare';
 import ControlPanel from '@/components/ControlPanel';
 import { toast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
+import type { TestResult } from '@/components/PCBSquare';
 
 type PCBStatus = 'untested' | 'pass' | 'fail';
+
+const testList: TestResult[] = [
+  { name: 'RTC configured', passed: false },
+  { name: 'RTC initialized', passed: false },
+  { name: 'lowRateAccel initialized', passed: false },
+  { name: 'lowRateAccel passed self-test', passed: false },
+  { name: 'hiRateAccel initialized', passed: false },
+  { name: 'Ext temperature sensor initialized', passed: false },
+  { name: 'PSRAM initialized', passed: false },
+  { name: 'PSRAM test passed', passed: false },
+  { name: 'exFlash initialized', passed: false },
+  { name: 'Ext NFC configuring', passed: false },
+  { name: 'Ext NFC initialized', passed: false },
+];
 
 const Index = () => {
   const [pcbStatuses, setPcbStatuses] = useState<PCBStatus[]>(Array(6).fill('untested'));
   const [activePCB, setActivePCB] = useState<number>(1);
+  const [pcbTestResults, setPcbTestResults] = useState<TestResult[][]>(
+    Array(6).fill([...testList])
+  );
   
   const handlePass = () => {
     const newStatuses = [...pcbStatuses];
     newStatuses[activePCB - 1] = 'pass';
     setPcbStatuses(newStatuses);
+    
+    // Simulate random test results
+    const newResults = [...pcbTestResults];
+    newResults[activePCB - 1] = testList.map(test => ({
+      ...test,
+      passed: Math.random() > 0.2 // 80% chance to pass each test
+    }));
+    setPcbTestResults(newResults);
     
     toast({
       title: "Test Passed",
@@ -22,7 +47,6 @@ const Index = () => {
       variant: "default",
     });
     
-    // Auto move to next untested PCB
     moveToNextUntested();
   };
   
@@ -31,13 +55,20 @@ const Index = () => {
     newStatuses[activePCB - 1] = 'fail';
     setPcbStatuses(newStatuses);
     
+    // Simulate failed test results
+    const newResults = [...pcbTestResults];
+    newResults[activePCB - 1] = testList.map(test => ({
+      ...test,
+      passed: Math.random() > 0.8 // 20% chance to pass each test
+    }));
+    setPcbTestResults(newResults);
+    
     toast({
       title: "Test Failed",
       description: `PCB #${activePCB} test failed.`,
       variant: "destructive",
     });
     
-    // Auto move to next untested PCB
     moveToNextUntested();
   };
   
@@ -83,7 +114,7 @@ const Index = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800">PCB Square Tester</h1>
           <p className="text-gray-600 mt-2">Test your PCB boards and track results</p>
@@ -106,13 +137,14 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex justify-center space-x-4 mb-8">
+            <div className="flex justify-center gap-4 mb-8 overflow-x-auto">
               {pcbStatuses.map((status, index) => (
                 <PCBSquare 
                   key={index}
                   number={index + 1}
                   status={status}
                   isActive={activePCB === index + 1}
+                  testResults={pcbTestResults[index]}
                   onClick={() => handleSquareClick(index)}
                 />
               ))}

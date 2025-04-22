@@ -1,13 +1,18 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Check, X } from 'lucide-react';
 
-type PCBStatus = 'untested' | 'pass' | 'fail';
+export type TestResult = {
+  name: string;
+  passed: boolean;
+};
 
 interface PCBSquareProps {
   number: number;
-  status: PCBStatus;
+  status: 'untested' | 'pass' | 'fail';
   isActive: boolean;
+  testResults?: TestResult[];
   onClick?: () => void;
 }
 
@@ -15,14 +20,15 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
   number, 
   status, 
   isActive, 
+  testResults = [],
   onClick 
 }) => {
   const getStatusColor = () => {
     switch (status) {
       case 'pass':
-        return 'bg-green-400';
+        return 'bg-green-50';
       case 'fail':
-        return 'bg-red-400';
+        return 'bg-red-50';
       default:
         return 'bg-white';
     }
@@ -32,20 +38,33 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
     <div 
       onClick={onClick}
       className={cn(
-        "w-24 h-24 md:w-32 md:h-32 flex items-center justify-center rounded-lg shadow-md transition-all duration-300",
+        "w-64 h-auto p-4 flex flex-col rounded-lg shadow-md transition-all duration-300",
         getStatusColor(),
         isActive ? 'ring-4 ring-blue-500 scale-105' : 'hover:scale-102',
         "cursor-pointer"
       )}
     >
       <span className={cn(
-        "text-2xl font-bold",
+        "text-xl font-bold mb-2 text-center",
         status === 'pass' ? 'text-green-800' : 
         status === 'fail' ? 'text-red-800' : 
         'text-gray-800'
       )}>
         PCB{number}
       </span>
+      
+      <div className="space-y-2 text-sm">
+        {testResults.map((test, index) => (
+          <div key={index} className="flex items-center justify-between">
+            <span className="text-gray-700">{test.name}</span>
+            {test.passed ? (
+              <Check className="text-green-600 h-4 w-4" />
+            ) : (
+              <X className="text-red-600 h-4 w-4" />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
