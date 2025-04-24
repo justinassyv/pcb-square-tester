@@ -57,7 +57,7 @@ export const mockDeviceData: DeviceData = {
     initialized: true
   },
   extTemperatureSensor: {
-    initialized: true
+    initialized: false
   },
   PSRAM: {
     initialized: true,
