@@ -1,32 +1,34 @@
-
 import React, { useState } from 'react';
 import PCBSquare from '@/components/PCBSquare';
 import ControlPanel from '@/components/ControlPanel';
 import { toast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import type { TestResult } from '@/components/PCBSquare';
+import { mockDeviceData, type DeviceData } from '@/types/deviceData';
 
 type PCBStatus = 'untested' | 'pass' | 'fail';
 
-const testList: TestResult[] = [
-  { name: 'RTC configured', passed: false },
-  { name: 'RTC initialized', passed: false },
-  { name: 'lowRateAccel initialized', passed: false },
-  { name: 'lowRateAccel passed self-test', passed: false },
-  { name: 'hiRateAccel initialized', passed: false },
-  { name: 'Ext temperature sensor initialized', passed: false },
-  { name: 'PSRAM initialized', passed: false },
-  { name: 'PSRAM test passed', passed: false },
-  { name: 'exFlash initialized', passed: false },
-  { name: 'Ext NFC configuring', passed: false },
-  { name: 'Ext NFC initialized', passed: false },
-];
+const generateTestResults = (data: DeviceData): TestResult[] => {
+  return [
+    { name: 'RTC configured', passed: data.RTC.configured },
+    { name: 'RTC initialized', passed: data.RTC.initialized },
+    { name: 'lowRateAccel initialized', passed: data.lowRateAccel.initialized },
+    { name: 'lowRateAccel passed self-test', passed: data.lowRateAccel.selfTestPassed },
+    { name: 'hiRateAccel initialized', passed: data.hiRateAccel.initialized },
+    { name: 'Ext temperature sensor initialized', passed: data.extTemperatureSensor.initialized },
+    { name: 'PSRAM initialized', passed: data.PSRAM.initialized },
+    { name: 'PSRAM test passed', passed: data.PSRAM.testPassed },
+    { name: 'exFlash initialized', passed: data.exFlash.initialized },
+    { name: 'Ext NFC configuring', passed: data.extNFC.configuring },
+    { name: 'Ext NFC initialized', passed: data.extNFC.initialized },
+  ];
+};
 
 const Index = () => {
   const [pcbStatuses, setPcbStatuses] = useState<PCBStatus[]>(Array(6).fill('untested'));
   const [activePCB, setActivePCB] = useState<number>(1);
   const [pcbTestResults, setPcbTestResults] = useState<TestResult[][]>(
-    Array(6).fill([...testList])
+    Array(6).fill(generateTestResults(mockDeviceData))
   );
   
   const handlePass = () => {
@@ -34,12 +36,9 @@ const Index = () => {
     newStatuses[activePCB - 1] = 'pass';
     setPcbStatuses(newStatuses);
     
-    // Simulate random test results
+    // Use the mock data to generate test results
     const newResults = [...pcbTestResults];
-    newResults[activePCB - 1] = testList.map(test => ({
-      ...test,
-      passed: Math.random() > 0.2 // 80% chance to pass each test
-    }));
+    newResults[activePCB - 1] = generateTestResults(mockDeviceData);
     setPcbTestResults(newResults);
     
     toast({
@@ -56,12 +55,21 @@ const Index = () => {
     newStatuses[activePCB - 1] = 'fail';
     setPcbStatuses(newStatuses);
     
-    // Simulate failed test results
+    // Generate failed results by inverting the mock data
+    const failedData: DeviceData = JSON.parse(JSON.stringify(mockDeviceData));
+    Object.keys(failedData).forEach(key => {
+      if (typeof failedData[key as keyof DeviceData] === 'object') {
+        const obj = failedData[key as keyof DeviceData];
+        Object.keys(obj).forEach(subKey => {
+          if (typeof obj[subKey] === 'boolean') {
+            obj[subKey] = Math.random() > 0.8; // 20% chance to pass
+          }
+        });
+      }
+    });
+    
     const newResults = [...pcbTestResults];
-    newResults[activePCB - 1] = testList.map(test => ({
-      ...test,
-      passed: Math.random() > 0.8 // 20% chance to pass each test
-    }));
+    newResults[activePCB - 1] = generateTestResults(failedData);
     setPcbTestResults(newResults);
     
     toast({
@@ -110,7 +118,6 @@ const Index = () => {
   };
   
   const allTested = pcbStatuses.every(status => status !== 'untested');
-  // Fix the counters to directly use the status values instead of test results
   const passCount = pcbStatuses.filter(status => status === 'pass').length;
   const failCount = pcbStatuses.filter(status => status === 'fail').length;
   
