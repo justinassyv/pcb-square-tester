@@ -31,23 +31,54 @@ const Index = () => {
     Array(6).fill(generateTestResults(mockDeviceData))
   );
   
-  const handlePass = () => {
-    const newStatuses = [...pcbStatuses];
-    newStatuses[activePCB - 1] = 'pass';
-    setPcbStatuses(newStatuses);
-    
-    // Use the mock data to generate test results
-    const newResults = [...pcbTestResults];
-    newResults[activePCB - 1] = generateTestResults(mockDeviceData);
-    setPcbTestResults(newResults);
-    
+  const handlePass = async () => {
     toast({
-      title: "Test Passed",
-      description: `PCB #${activePCB} test completed successfully.`,
-      variant: "default",
+      title: "Flashing PCB",
+      description: "Executing jig.py script...",
     });
     
-    moveToNextUntested();
+    try {
+      const response = await fetch('http://localhost:3001/api/flash-pcb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        const newStatuses = [...pcbStatuses];
+        newStatuses[activePCB - 1] = 'pass';
+        setPcbStatuses(newStatuses);
+        
+        // Use the mock data to generate test results
+        const newResults = [...pcbTestResults];
+        newResults[activePCB - 1] = generateTestResults(mockDeviceData);
+        setPcbTestResults(newResults);
+        
+        toast({
+          title: "Flash Successful",
+          description: `PCB #${activePCB} flashed successfully.`,
+          variant: "default",
+        });
+        
+        moveToNextUntested();
+      } else {
+        toast({
+          title: "Flash Failed",
+          description: data.message || "Failed to flash PCB",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error flashing PCB:', error);
+      toast({
+        title: "Connection Error",
+        description: "Could not connect to backend server. Make sure the server is running on port 3001.",
+        variant: "destructive",
+      });
+    }
   };
   
   const handleFail = () => {
