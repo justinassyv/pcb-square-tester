@@ -36,7 +36,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           className="flex items-center justify-center p-6 bg-green-50 hover:bg-green-100 border-green-200"
         >
           <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
-          <span className="text-lg font-medium">Pass</span>
+          <span className="text-lg font-medium">FLASH PCB</span>
         </Button>
         
         <Button 
