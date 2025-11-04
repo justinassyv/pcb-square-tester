@@ -89,6 +89,7 @@ const Index = () => {
           setPcbStatuses(prevStatuses => {
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'pass';
+            console.log(`Updated PCB ${pcbNum} status to PASS. New statuses:`, newStatuses);
             return newStatuses;
           });
 
@@ -114,6 +115,7 @@ const Index = () => {
           setPcbStatuses(prevStatuses => {
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'fail';
+            console.log(`Updated PCB ${pcbNum} status to FAIL. New statuses:`, newStatuses);
             return newStatuses;
           });
           

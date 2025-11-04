@@ -125,7 +125,7 @@ app.get('/api/flash-progress', (req, res) => {
 app.post('/api/kill-process', (req, res) => {
   if (activePythonProcess) {
     console.log('Killing Python process via API request');
-    activePythonProcess.kill();
+    activePythonProcess.kill('SIGKILL'); // Force kill immediately
     activePythonProcess = null;
     res.json({ status: 'ok', message: 'Process killed' });
   } else {
