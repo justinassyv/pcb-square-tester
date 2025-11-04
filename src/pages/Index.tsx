@@ -65,30 +65,39 @@ const Index = () => {
             duration: 2000,
           });
         } else if (data.type === 'flash_complete') {
-          console.log(`Flash complete for PCB ${activePCB}`);
-          // Mark current PCB as passed
-          const newStatuses = [...pcbStatuses];
-          newStatuses[activePCB - 1] = 'pass';
-          setPcbStatuses(newStatuses);
+          console.log(`Flash complete for PCB ${data.pcb}`);
+          // Mark PCB as passed using the PCB number from the event
+          setPcbStatuses(prevStatuses => {
+            const newStatuses = [...prevStatuses];
+            newStatuses[data.pcb - 1] = 'pass';
+            return newStatuses;
+          });
 
-          const newResults = [...pcbTestResults];
-          newResults[activePCB - 1] = generateTestResults(mockDeviceData);
-          setPcbTestResults(newResults);
+          setPcbTestResults(prevResults => {
+            const newResults = [...prevResults];
+            newResults[data.pcb - 1] = generateTestResults(mockDeviceData);
+            return newResults;
+          });
 
           toast({
             title: "Flash Complete",
-            description: `PCB ${activePCB} flashed successfully`,
+            description: `PCB ${data.pcb} flashed successfully`,
+            duration: 2000,
           });
         } else if (data.type === 'flash_failed') {
-          // Mark current PCB as failed
-          const newStatuses = [...pcbStatuses];
-          newStatuses[activePCB - 1] = 'fail';
-          setPcbStatuses(newStatuses);
+          console.log(`Flash failed for PCB ${data.pcb}`);
+          // Mark PCB as failed using the PCB number from the event
+          setPcbStatuses(prevStatuses => {
+            const newStatuses = [...prevStatuses];
+            newStatuses[data.pcb - 1] = 'fail';
+            return newStatuses;
+          });
           
           toast({
             title: "Flash Failed",
-            description: `PCB ${activePCB} failed to flash`,
+            description: `PCB ${data.pcb} failed to flash`,
             variant: "destructive",
+            duration: 2000,
           });
         } else if (data.type === 'complete') {
           // All done

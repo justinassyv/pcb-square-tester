@@ -27,6 +27,8 @@ app.get('/api/flash-progress', (req, res) => {
   const scriptPath = join(homeDir, 'Documents', 'sonora', 'jig.py');
   const pythonProcess = spawn('python3', [scriptPath]);
 
+  let currentPCB = 1; // Track current PCB being processed
+
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
     console.log('Python output:', output);
@@ -35,6 +37,7 @@ app.get('/api/flash-progress', (req, res) => {
     const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
     if (channelMatch) {
       const channel = parseInt(channelMatch[1]);
+      currentPCB = channel; // Update tracked PCB
       console.log(`Switching to PCB ${channel}`);
       const message = JSON.stringify({ type: 'channel_selected', pcb: channel });
       res.write(`data: ${message}\n\n`);
@@ -46,6 +49,7 @@ app.get('/api/flash-progress', (req, res) => {
       const flashMatch = output.match(/Flashing board on channel (\d+)/);
       if (flashMatch) {
         const channel = parseInt(flashMatch[1]);
+        currentPCB = channel; // Update tracked PCB
         console.log(`Flashing PCB ${channel}`);
         const message = JSON.stringify({ type: 'flashing', pcb: channel });
         res.write(`data: ${message}\n\n`);
@@ -55,16 +59,16 @@ app.get('/api/flash-progress', (req, res) => {
     
     // Parse completion
     if (output.includes('Programming completed successfully')) {
-      console.log('Flash successful');
-      const message = JSON.stringify({ type: 'flash_complete' });
+      console.log(`Flash successful for PCB ${currentPCB}`);
+      const message = JSON.stringify({ type: 'flash_complete', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
       res.flush?.(); // Force flush the buffer
     }
     
     // Parse failure
     if (output.includes('Flashing failed')) {
-      console.log('Flash failed');
-      const message = JSON.stringify({ type: 'flash_failed' });
+      console.log(`Flash failed for PCB ${currentPCB}`);
+      const message = JSON.stringify({ type: 'flash_failed', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
       res.flush?.(); // Force flush the buffer
     }
