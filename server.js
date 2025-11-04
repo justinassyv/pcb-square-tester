@@ -33,15 +33,19 @@ app.get('/api/flash-progress', (req, res) => {
     const output = data.toString();
     console.log('Python output:', output);
     
+    // Send all output to frontend for debugging
+    res.write(`data: ${JSON.stringify({ type: 'debug', message: output })}\n\n`);
+    res.flush?.();
+    
     // Parse which channel is being selected
     const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
     if (channelMatch) {
       const channel = parseInt(channelMatch[1]);
-      currentPCB = channel; // Update tracked PCB
+      currentPCB = channel;
       console.log(`Switching to PCB ${channel}`);
       const message = JSON.stringify({ type: 'channel_selected', pcb: channel });
       res.write(`data: ${message}\n\n`);
-      res.flush?.(); // Force flush the buffer
+      res.flush?.();
     }
     
     // Parse flashing status
@@ -49,11 +53,11 @@ app.get('/api/flash-progress', (req, res) => {
       const flashMatch = output.match(/Flashing board on channel (\d+)/);
       if (flashMatch) {
         const channel = parseInt(flashMatch[1]);
-        currentPCB = channel; // Update tracked PCB
+        currentPCB = channel;
         console.log(`Flashing PCB ${channel}`);
         const message = JSON.stringify({ type: 'flashing', pcb: channel });
         res.write(`data: ${message}\n\n`);
-        res.flush?.(); // Force flush the buffer
+        res.flush?.();
       }
     }
     
@@ -62,7 +66,7 @@ app.get('/api/flash-progress', (req, res) => {
       console.log(`Flash successful for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flash_complete', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
-      res.flush?.(); // Force flush the buffer
+      res.flush?.();
     }
     
     // Parse failure
@@ -70,7 +74,15 @@ app.get('/api/flash-progress', (req, res) => {
       console.log(`Flash failed for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flash_failed', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
-      res.flush?.(); // Force flush the buffer
+      res.flush?.();
+    }
+    
+    // Parse Done message
+    if (output.includes('Done')) {
+      console.log('Python script completed - Done message received');
+      const message = JSON.stringify({ type: 'all_done' });
+      res.write(`data: ${message}\n\n`);
+      res.flush?.();
     }
   });
 

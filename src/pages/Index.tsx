@@ -60,7 +60,9 @@ const Index = () => {
         console.log('PCB number:', data.pcb);
         console.log('========================');
 
-        if (data.type === 'channel_selected') {
+        if (data.type === 'debug') {
+          console.log('[PYTHON]:', data.message);
+        } else if (data.type === 'channel_selected') {
           // Update active PCB based on current channel
           console.log(`[FRONTEND] Switching to PCB ${data.pcb}`);
           console.log('[FRONTEND] Calling setActivePCB with:', data.pcb);
@@ -116,12 +118,19 @@ const Index = () => {
             variant: "destructive",
             duration: 2000,
           });
-        } else if (data.type === 'complete') {
-          // All done
+        } else if (data.type === 'all_done') {
+          console.log('All processing complete - Done message received');
           eventSource.close();
           toast({
             title: "All PCBs Processed",
             description: "Flash sequence complete",
+          });
+        } else if (data.type === 'complete') {
+          // Process exit
+          eventSource.close();
+          toast({
+            title: "Process Complete",
+            description: "Python script finished",
           });
         } else if (data.type === 'error') {
           eventSource.close();
