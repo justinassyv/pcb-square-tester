@@ -221,40 +221,40 @@ const Index = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[95%] mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">PCB Square Tester</h1>
-          <p className="text-gray-600 mt-2">Test your PCB boards and track results</p>
+          <h1 className="text-5xl font-bold text-gray-800">PCB Square Tester</h1>
+          <p className="text-gray-600 mt-3 text-xl">Test your PCB boards and track results</p>
         </div>
         
-        <Card className="p-6 bg-white shadow-md rounded-lg">
+        <Card className="p-8 bg-white shadow-lg rounded-xl">
           <div className="mb-6">
             {/* Large Active PCB Indicator */}
-            <div className="mb-6 p-6 bg-blue-600 rounded-lg text-center">
-              <h2 className="text-4xl font-bold text-white mb-2">
+            <div className="mb-8 p-8 bg-blue-600 rounded-xl text-center">
+              <h2 className="text-6xl font-bold text-white mb-4">
                 PROCESSING PCB {activePCB}
               </h2>
-              <div className="w-16 h-16 mx-auto bg-white rounded-full animate-pulse flex items-center justify-center">
-                <span className="text-3xl font-bold text-blue-600">{activePCB}</span>
+              <div className="w-24 h-24 mx-auto bg-white rounded-full animate-pulse flex items-center justify-center">
+                <span className="text-5xl font-bold text-blue-600">{activePCB}</span>
               </div>
             </div>
 
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-700">Test Status</h2>
-              <div className="flex space-x-4">
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-700">Test Status</h2>
+              <div className="flex space-x-6">
+                <span className="px-5 py-2 bg-green-100 text-green-800 rounded-full text-lg font-medium">
                   Passed: {passCount}
                 </span>
-                <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                <span className="px-5 py-2 bg-red-100 text-red-800 rounded-full text-lg font-medium">
                   Failed: {failCount}
                 </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+                <span className="px-5 py-2 bg-gray-100 text-gray-800 rounded-full text-lg font-medium">
                   Untested: {6 - passCount - failCount}
                 </span>
               </div>
             </div>
             
-            <div className="flex justify-center gap-4 mb-8 overflow-x-auto">
+            <div className="flex justify-center gap-6 mb-10 overflow-x-auto">
               {pcbStatuses.map((status, index) => (
                 <PCBSquare 
                   key={index}
