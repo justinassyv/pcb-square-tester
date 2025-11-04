@@ -32,6 +32,7 @@ const Index = () => {
   );
   
   const handlePass = async () => {
+    console.log('Starting flash process...');
     toast({
       title: "Starting Flash Process",
       description: "Processing all PCBs in sequence...",
@@ -40,24 +41,31 @@ const Index = () => {
     try {
       // Connect to SSE endpoint for real-time progress
       const eventSource = new EventSource('http://localhost:3001/api/flash-progress');
+      console.log('EventSource created, waiting for events...');
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log('Progress update:', data);
+        console.log('Progress update received:', data);
 
         if (data.type === 'channel_selected') {
           // Update active PCB based on current channel
+          console.log(`Switching to PCB ${data.pcb}`);
           setActivePCB(data.pcb);
           toast({
-            title: "Switching to PCB",
+            title: `Switching to PCB ${data.pcb}`,
             description: `Now processing PCB ${data.pcb}`,
+            duration: 2000,
           });
         } else if (data.type === 'flashing') {
+          console.log(`Flashing PCB ${data.pcb}`);
+          setActivePCB(data.pcb);
           toast({
             title: "Flashing",
             description: `Flashing PCB ${data.pcb}...`,
+            duration: 2000,
           });
         } else if (data.type === 'flash_complete') {
+          console.log(`Flash complete for PCB ${activePCB}`);
           // Mark current PCB as passed
           const newStatuses = [...pcbStatuses];
           newStatuses[activePCB - 1] = 'pass';
@@ -99,8 +107,12 @@ const Index = () => {
         }
       };
 
+      eventSource.onopen = () => {
+        console.log('SSE connection established');
+      };
+
       eventSource.onerror = (error) => {
-        console.error('SSE error:', error);
+        console.error('SSE connection error:', error);
         eventSource.close();
         toast({
           title: "Connection Error",

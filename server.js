@@ -36,7 +36,9 @@ app.get('/api/flash-progress', (req, res) => {
     if (channelMatch) {
       const channel = parseInt(channelMatch[1]);
       console.log(`Switching to PCB ${channel}`);
-      res.write(`data: ${JSON.stringify({ type: 'channel_selected', pcb: channel })}\n\n`);
+      const message = JSON.stringify({ type: 'channel_selected', pcb: channel });
+      res.write(`data: ${message}\n\n`);
+      res.flush?.(); // Force flush the buffer
     }
     
     // Parse flashing status
@@ -45,20 +47,26 @@ app.get('/api/flash-progress', (req, res) => {
       if (flashMatch) {
         const channel = parseInt(flashMatch[1]);
         console.log(`Flashing PCB ${channel}`);
-        res.write(`data: ${JSON.stringify({ type: 'flashing', pcb: channel })}\n\n`);
+        const message = JSON.stringify({ type: 'flashing', pcb: channel });
+        res.write(`data: ${message}\n\n`);
+        res.flush?.(); // Force flush the buffer
       }
     }
     
     // Parse completion
     if (output.includes('Programming completed successfully')) {
       console.log('Flash successful');
-      res.write(`data: ${JSON.stringify({ type: 'flash_complete' })}\n\n`);
+      const message = JSON.stringify({ type: 'flash_complete' });
+      res.write(`data: ${message}\n\n`);
+      res.flush?.(); // Force flush the buffer
     }
     
     // Parse failure
     if (output.includes('Flashing failed')) {
       console.log('Flash failed');
-      res.write(`data: ${JSON.stringify({ type: 'flash_failed' })}\n\n`);
+      const message = JSON.stringify({ type: 'flash_failed' });
+      res.write(`data: ${message}\n\n`);
+      res.flush?.(); // Force flush the buffer
     }
   });
 
