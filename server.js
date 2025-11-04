@@ -27,7 +27,7 @@ app.get('/api/flash-progress', (req, res) => {
   const scriptPath = join(homeDir, 'Documents', 'sonora', 'jig.py');
   const pythonProcess = spawn('python3', [scriptPath]);
 
-  let currentPCB = 1; // Track current PCB being processed
+  let currentPCB = 0; // Track current PCB being processed (will increment to 1 on first device)
 
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
