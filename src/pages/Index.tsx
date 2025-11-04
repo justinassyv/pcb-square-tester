@@ -36,9 +36,11 @@ const Index = () => {
   
   useEffect(() => {
     pcbStatusesRef.current = pcbStatuses;
+    console.log('🔄 Component Rendered - Current statuses:', pcbStatuses);
   }, [pcbStatuses]);
   
   const handlePass = async () => {
+    console.log('🚀 FLASH PCB BUTTON CLICKED');
     console.log('Starting flash process...');
     
     // Reset to PCB 1 at start
