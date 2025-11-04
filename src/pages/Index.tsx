@@ -174,35 +174,30 @@ const Index = () => {
     }
   };
   
-  const handleFail = () => {
-    const newStatuses = [...pcbStatuses];
-    newStatuses[activePCB - 1] = 'fail';
-    setPcbStatuses(newStatuses);
-    
-    // Generate failed results by inverting the mock data
-    const failedData: DeviceData = JSON.parse(JSON.stringify(mockDeviceData));
-    Object.keys(failedData).forEach(key => {
-      if (typeof failedData[key as keyof DeviceData] === 'object') {
-        const obj = failedData[key as keyof DeviceData];
-        Object.keys(obj).forEach(subKey => {
-          if (typeof obj[subKey] === 'boolean') {
-            obj[subKey] = Math.random() > 0.8; // 20% chance to pass
-          }
-        });
-      }
-    });
-    
-    const newResults = [...pcbTestResults];
-    newResults[activePCB - 1] = generateTestResults(failedData);
-    setPcbTestResults(newResults);
-    
-    toast({
-      title: "Test Failed",
-      description: `PCB #${activePCB} test failed.`,
-      variant: "destructive",
-    });
-    
-    moveToNextUntested();
+  const handleCancel = async () => {
+    try {
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001/api/kill-process'
+        : `http://${window.location.hostname}:3001/api/kill-process`;
+      
+      await fetch(apiUrl, { method: 'POST' });
+      
+      toast({
+        title: "Process Cancelled",
+        description: "Flash process has been terminated",
+        variant: "destructive",
+      });
+      
+      // Reset to first untested PCB
+      moveToNextUntested();
+    } catch (error) {
+      console.error('Error killing process:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel process",
+        variant: "destructive",
+      });
+    }
   };
   
   const moveToNextUntested = () => {
@@ -296,7 +291,7 @@ const Index = () => {
           <div className="flex justify-center">
             <ControlPanel 
               onPass={handlePass}
-              onCancel={handleNext}
+              onCancel={handleCancel}
               currentPCB={activePCB}
               disabled={{
                 pass: pcbStatuses[activePCB - 1] !== 'untested' || allTested,

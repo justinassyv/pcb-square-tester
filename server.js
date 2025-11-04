@@ -14,6 +14,9 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
+// Store active python process
+let activePythonProcess = null;
+
 // SSE endpoint for real-time progress updates
 app.get('/api/flash-progress', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -26,6 +29,9 @@ app.get('/api/flash-progress', (req, res) => {
   const homeDir = os.homedir();
   const scriptPath = join(homeDir, 'Documents', 'sonora', 'jig.py');
   const pythonProcess = spawn('python3', [scriptPath]);
+  
+  // Store reference to active process
+  activePythonProcess = pythonProcess;
 
   let currentPCB = 0; // Track current PCB being processed (will increment to 1 on first device)
 
@@ -111,7 +117,20 @@ app.get('/api/flash-progress', (req, res) => {
   req.on('close', () => {
     console.log('Client disconnected, killing Python process');
     pythonProcess.kill();
+    activePythonProcess = null;
   });
+});
+
+// Kill process endpoint
+app.post('/api/kill-process', (req, res) => {
+  if (activePythonProcess) {
+    console.log('Killing Python process via API request');
+    activePythonProcess.kill();
+    activePythonProcess = null;
+    res.json({ status: 'ok', message: 'Process killed' });
+  } else {
+    res.json({ status: 'ok', message: 'No active process' });
+  }
 });
 
 // Health check endpoint
