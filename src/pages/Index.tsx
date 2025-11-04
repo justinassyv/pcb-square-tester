@@ -256,6 +256,16 @@ const Index = () => {
     });
   };
   
+  const handleTestPass = () => {
+    console.log('TEST: Manually passing PCB', activePCB);
+    setPcbStatuses(prevStatuses => {
+      const newStatuses = [...prevStatuses];
+      newStatuses[activePCB - 1] = 'pass';
+      console.log('TEST: New statuses:', newStatuses);
+      return newStatuses;
+    });
+  };
+  
   const handleSquareClick = (index: number) => {
     if (pcbStatuses[index] === 'untested') {
       setActivePCB(index + 1);
@@ -318,7 +328,13 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="flex justify-center">
+          <div className="flex justify-center flex-col items-center gap-4">
+            <button 
+              onClick={handleTestPass}
+              className="px-4 py-2 bg-purple-600 text-white rounded"
+            >
+              TEST: Pass PCB {activePCB}
+            </button>
             <ControlPanel 
               onPass={handlePass}
               onCancel={handleCancel}
