@@ -103,6 +103,9 @@ const Index = () => {
             description: `PCB ${pcbNum} flashed successfully`,
             duration: 1500,
           });
+          
+          // Move to next untested PCB
+          moveToNextUntested();
         } else if (data.type === 'flash_failed') {
           const pcbNum = parseInt(data.pcb);
           console.log(`Flash failed for PCB ${pcbNum}`);
@@ -120,6 +123,9 @@ const Index = () => {
             variant: "destructive",
             duration: 1500,
           });
+          
+          // Move to next untested PCB
+          moveToNextUntested();
         } else if (data.type === 'all_done') {
           console.log('Done message received for current PCB - continuing...');
           // Don't close - the Python script continues to next PCB
