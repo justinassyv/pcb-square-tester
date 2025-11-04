@@ -54,20 +54,28 @@ const Index = () => {
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log('Progress update received:', data);
+        console.log('=== SSE EVENT RECEIVED ===');
+        console.log('Event data:', data);
+        console.log('Event type:', data.type);
+        console.log('PCB number:', data.pcb);
+        console.log('========================');
 
         if (data.type === 'channel_selected') {
           // Update active PCB based on current channel
-          console.log(`Switching to PCB ${data.pcb}`);
+          console.log(`[FRONTEND] Switching to PCB ${data.pcb}`);
+          console.log('[FRONTEND] Calling setActivePCB with:', data.pcb);
           setActivePCB(data.pcb);
+          console.log('[FRONTEND] setActivePCB called');
           toast({
             title: `Switching to PCB ${data.pcb}`,
             description: `Now processing PCB ${data.pcb}`,
             duration: 2000,
           });
         } else if (data.type === 'flashing') {
-          console.log(`Flashing PCB ${data.pcb}`);
+          console.log(`[FRONTEND] Flashing PCB ${data.pcb}`);
+          console.log('[FRONTEND] Calling setActivePCB with:', data.pcb);
           setActivePCB(data.pcb);
+          console.log('[FRONTEND] setActivePCB called');
           toast({
             title: "Flashing",
             description: `Flashing PCB ${data.pcb}...`,
@@ -126,11 +134,16 @@ const Index = () => {
       };
 
       eventSource.onopen = () => {
-        console.log('SSE connection established');
+        console.log('=== SSE CONNECTION OPENED ===');
+        console.log('Connected to:', apiUrl);
+        console.log('============================');
       };
 
       eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error);
+        console.error('=== SSE CONNECTION ERROR ===');
+        console.error('Error:', error);
+        console.error('ReadyState:', eventSource.readyState);
+        console.error('===========================');
         eventSource.close();
         toast({
           title: "Connection Error",
