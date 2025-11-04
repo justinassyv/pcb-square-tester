@@ -280,8 +280,13 @@ const Index = () => {
   const passCount = pcbStatuses.filter(status => status === 'pass').length;
   const failCount = pcbStatuses.filter(status => status === 'fail').length;
   
+  const isCurrentPCBUntested = pcbStatuses[activePCB - 1] === 'untested';
+  const isButtonDisabled = !isCurrentPCBUntested || allTested;
+  
   console.log('=== RENDER ===');
   console.log('pcbStatuses:', pcbStatuses);
+  console.log('activePCB:', activePCB, 'Status:', pcbStatuses[activePCB - 1]);
+  console.log('Button disabled:', isButtonDisabled, 'Reason:', !isCurrentPCBUntested ? 'Current PCB not untested' : allTested ? 'All tested' : 'None');
   console.log('Counts - Pass:', passCount, 'Fail:', failCount, 'Untested:', 6 - passCount - failCount);
   
   return (
@@ -338,7 +343,7 @@ const Index = () => {
               onCancel={handleCancel}
               currentPCB={activePCB}
               disabled={{
-                pass: pcbStatuses[activePCB - 1] !== 'untested' || allTested,
+                pass: isButtonDisabled,
                 cancel: allTested
               }}
             />
