@@ -31,18 +31,26 @@ app.get('/api/flash-progress', (req, res) => {
 
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
-    console.log('Python output:', output);
+    console.log('========================================');
+    console.log('RAW Python output:', JSON.stringify(output));
+    console.log('========================================');
     
     // Send all output to frontend for debugging
     res.write(`data: ${JSON.stringify({ type: 'debug', message: output })}\n\n`);
     res.flush?.();
+    
+    // Try to match any number in the output that might indicate PCB
+    const anyNumberMatch = output.match(/(\d+)/);
+    if (anyNumberMatch) {
+      console.log(`Found number in output: ${anyNumberMatch[1]}`);
+    }
     
     // Parse which channel is being selected
     const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
     if (channelMatch) {
       const channel = parseInt(channelMatch[1]);
       currentPCB = channel;
-      console.log(`Switching to PCB ${channel}`);
+      console.log(`✓✓✓ MATCHED: Switching to PCB ${channel}`);
       const message = JSON.stringify({ type: 'channel_selected', pcb: channel });
       res.write(`data: ${message}\n\n`);
       res.flush?.();
@@ -54,7 +62,7 @@ app.get('/api/flash-progress', (req, res) => {
       if (flashMatch) {
         const channel = parseInt(flashMatch[1]);
         currentPCB = channel;
-        console.log(`Flashing PCB ${channel}`);
+        console.log(`✓✓✓ MATCHED: Flashing PCB ${channel}`);
         const message = JSON.stringify({ type: 'flashing', pcb: channel });
         res.write(`data: ${message}\n\n`);
         res.flush?.();
@@ -63,7 +71,7 @@ app.get('/api/flash-progress', (req, res) => {
     
     // Parse completion
     if (output.includes('Programming completed successfully')) {
-      console.log(`Flash successful for PCB ${currentPCB}`);
+      console.log(`✓✓✓ MATCHED: Flash successful for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flash_complete', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
       res.flush?.();
@@ -71,7 +79,7 @@ app.get('/api/flash-progress', (req, res) => {
     
     // Parse failure
     if (output.includes('Flashing failed')) {
-      console.log(`Flash failed for PCB ${currentPCB}`);
+      console.log(`✓✓✓ MATCHED: Flash failed for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flash_failed', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
       res.flush?.();
@@ -79,7 +87,7 @@ app.get('/api/flash-progress', (req, res) => {
     
     // Parse Done message
     if (output.includes('Done')) {
-      console.log('Python script completed - Done message received');
+      console.log('✓✓✓ MATCHED: Done message received for PCB', currentPCB);
       const message = JSON.stringify({ type: 'all_done' });
       res.write(`data: ${message}\n\n`);
       res.flush?.();
