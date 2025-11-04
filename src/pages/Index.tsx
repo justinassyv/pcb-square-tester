@@ -121,18 +121,14 @@ const Index = () => {
             duration: 1500,
           });
         } else if (data.type === 'all_done') {
-          console.log('All processing complete - Done message received');
+          console.log('Done message received for current PCB - continuing...');
+          // Don't close - the Python script continues to next PCB
+        } else if (data.type === 'complete') {
+          // Process exit - this means Python script fully finished
           eventSource.close();
           toast({
             title: "All PCBs Processed",
             description: "Flash sequence complete",
-          });
-        } else if (data.type === 'complete') {
-          // Process exit
-          eventSource.close();
-          toast({
-            title: "Process Complete",
-            description: "Python script finished",
           });
         } else if (data.type === 'error') {
           eventSource.close();
