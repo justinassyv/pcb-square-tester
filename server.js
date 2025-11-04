@@ -45,41 +45,35 @@ app.get('/api/flash-progress', (req, res) => {
       console.log(`Found number in output: ${anyNumberMatch[1]}`);
     }
     
-    // Parse which channel is being selected
-    const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
-    if (channelMatch) {
-      const channel = parseInt(channelMatch[1]);
-      currentPCB = channel;
-      console.log(`✓✓✓ MATCHED: Switching to PCB ${channel}`);
-      const message = JSON.stringify({ type: 'channel_selected', pcb: channel });
+    // Parse which channel is being recovered (indicates start of flashing)
+    if (output.includes('Recovering device')) {
+      currentPCB++;
+      if (currentPCB > 6) currentPCB = 1; // Reset to 1 if exceeds 6
+      console.log(`✓✓✓ MATCHED: Starting flash for PCB ${currentPCB}`);
+      const message = JSON.stringify({ type: 'flashing', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
       res.flush?.();
     }
     
-    // Parse flashing status
-    if (output.includes('Flashing board on channel')) {
-      const flashMatch = output.match(/Flashing board on channel (\d+)/);
-      if (flashMatch) {
-        const channel = parseInt(flashMatch[1]);
-        currentPCB = channel;
-        console.log(`✓✓✓ MATCHED: Flashing PCB ${channel}`);
-        const message = JSON.stringify({ type: 'flashing', pcb: channel });
-        res.write(`data: ${message}\n\n`);
-        res.flush?.();
-      }
-    }
-    
-    // Parse completion
-    if (output.includes('Programming completed successfully')) {
+    // Parse success - UART data was parsed and saved
+    if (output.includes('Parsed data saved to')) {
       console.log(`✓✓✓ MATCHED: Flash successful for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flash_complete', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
       res.flush?.();
     }
     
-    // Parse failure
-    if (output.includes('Flashing failed')) {
-      console.log(`✓✓✓ MATCHED: Flash failed for PCB ${currentPCB}`);
+    // Parse failure - No UART data received
+    if (output.includes('No UART data received')) {
+      console.log(`✓✓✓ MATCHED: No UART data - Flash failed for PCB ${currentPCB}`);
+      const message = JSON.stringify({ type: 'flash_failed', pcb: currentPCB });
+      res.write(`data: ${message}\n\n`);
+      res.flush?.();
+    }
+    
+    // Parse failure - UART error
+    if (output.includes('UART error')) {
+      console.log(`✓✓✓ MATCHED: UART error - Flash failed for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flash_failed', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
       res.flush?.();
