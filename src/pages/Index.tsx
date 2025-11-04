@@ -194,14 +194,11 @@ const Index = () => {
           <div className="flex justify-center">
             <ControlPanel 
               onPass={handlePass}
-              onFail={handleFail}
-              onNext={handleNext}
-              onReset={handleReset}
+              onCancel={handleNext}
               currentPCB={activePCB}
               disabled={{
                 pass: pcbStatuses[activePCB - 1] !== 'untested' || allTested,
-                fail: pcbStatuses[activePCB - 1] !== 'untested' || allTested,
-                next: allTested
+                cancel: allTested
               }}
             />
           </div>

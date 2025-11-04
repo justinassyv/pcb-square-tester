@@ -1,22 +1,18 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, ArrowRight, RefreshCw } from 'lucide-react';
+import { CheckCircle, X } from 'lucide-react';
 
 interface ControlPanelProps {
   onPass: () => void;
-  onFail: () => void;
-  onNext: () => void;
-  onReset: () => void;
+  onCancel: () => void;
   currentPCB: number;
-  disabled: { pass: boolean; fail: boolean; next: boolean; }
+  disabled: { pass: boolean; cancel: boolean; }
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
   onPass,
-  onFail,
-  onNext,
-  onReset,
+  onCancel,
   currentPCB,
   disabled
 }) => {
@@ -40,32 +36,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </Button>
         
         <Button 
-          onClick={onFail}
-          disabled={disabled.fail}
-          variant="outline"
-          className="flex items-center justify-center p-6 bg-red-50 hover:bg-red-100 border-red-200"
-        >
-          <XCircle className="mr-2 h-5 w-5 text-red-600" />
-          <span className="text-lg font-medium">Fail</span>
-        </Button>
-        
-        <Button 
-          onClick={onNext}
-          disabled={disabled.next}
-          variant="outline"
-          className="flex items-center justify-center p-6 bg-blue-50 hover:bg-blue-100 border-blue-200"
-        >
-          <ArrowRight className="mr-2 h-5 w-5 text-blue-600" />
-          <span className="text-lg font-medium">Next PCB</span>
-        </Button>
-        
-        <Button 
-          onClick={onReset}
+          onClick={onCancel}
+          disabled={disabled.cancel}
           variant="outline"
           className="flex items-center justify-center p-6 bg-gray-50 hover:bg-gray-100 border-gray-200"
         >
-          <RefreshCw className="mr-2 h-5 w-5 text-gray-600" />
-          <span className="text-lg font-medium">Reset</span>
+          <X className="mr-2 h-5 w-5 text-gray-600" />
+          <span className="text-lg font-medium">Cancel</span>
         </Button>
       </div>
     </div>
