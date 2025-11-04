@@ -93,7 +93,6 @@ const Index = () => {
           const pcbNum = parseInt(data.pcb);
           console.log('=== FLASH COMPLETE EVENT ===');
           console.log('PCB Number:', pcbNum);
-          console.log('Before update - pcbStatuses:', pcbStatuses);
           
           // Mark PCB as passed
           setPcbStatuses(prevStatuses => {
@@ -101,6 +100,20 @@ const Index = () => {
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'pass';
             console.log('Inside setState - newStatuses:', newStatuses);
+            
+            // Find next untested PCB
+            setTimeout(() => {
+              setActivePCB(current => {
+                for (let i = 1; i <= 6; i++) {
+                  const checkIndex = (pcbNum - 1 + i) % 6;
+                  if (newStatuses[checkIndex] === 'untested') {
+                    return checkIndex + 1;
+                  }
+                }
+                return current;
+              });
+            }, 100);
+            
             return newStatuses;
           });
 
@@ -119,7 +132,6 @@ const Index = () => {
           const pcbNum = parseInt(data.pcb);
           console.log('=== FLASH FAILED EVENT ===');
           console.log('PCB Number:', pcbNum);
-          console.log('Before update - pcbStatuses:', pcbStatuses);
           
           // Mark PCB as failed
           setPcbStatuses(prevStatuses => {
@@ -127,6 +139,20 @@ const Index = () => {
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'fail';
             console.log('Inside setState - newStatuses:', newStatuses);
+            
+            // Find next untested PCB
+            setTimeout(() => {
+              setActivePCB(current => {
+                for (let i = 1; i <= 6; i++) {
+                  const checkIndex = (pcbNum - 1 + i) % 6;
+                  if (newStatuses[checkIndex] === 'untested') {
+                    return checkIndex + 1;
+                  }
+                }
+                return current;
+              });
+            }, 100);
+            
             return newStatuses;
           });
           
@@ -210,21 +236,7 @@ const Index = () => {
     }
   };
   
-  // Automatically move to next untested PCB when current one is tested
-  useEffect(() => {
-    const currentStatus = pcbStatuses[activePCB - 1];
-    if (currentStatus !== 'untested') {
-      // Current PCB is tested, find next untested
-      const currentIndex = activePCB - 1;
-      for (let i = 1; i <= pcbStatuses.length; i++) {
-        const checkIndex = (currentIndex + i) % pcbStatuses.length;
-        if (pcbStatuses[checkIndex] === 'untested') {
-          setActivePCB(checkIndex + 1);
-          break;
-        }
-      }
-    }
-  }, [pcbStatuses, activePCB]);
+  // Removed automatic PCB switching effect - now handled in SSE events
   
   const moveToNextUntested = () => {
     const currentIndex = activePCB - 1;
@@ -253,16 +265,6 @@ const Index = () => {
     toast({
       title: "Reset Complete",
       description: "All PCB statuses have been reset.",
-    });
-  };
-  
-  const handleTestPass = () => {
-    console.log('TEST: Manually passing PCB', activePCB);
-    setPcbStatuses(prevStatuses => {
-      const newStatuses = [...prevStatuses];
-      newStatuses[activePCB - 1] = 'pass';
-      console.log('TEST: New statuses:', newStatuses);
-      return newStatuses;
     });
   };
   
@@ -328,13 +330,7 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="flex justify-center flex-col items-center gap-4">
-            <button 
-              onClick={handleTestPass}
-              className="px-4 py-2 bg-purple-600 text-white rounded"
-            >
-              TEST: Pass PCB {activePCB}
-            </button>
+          <div className="flex justify-center">
             <ControlPanel 
               onPass={handlePass}
               onCancel={handleCancel}
