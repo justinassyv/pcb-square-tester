@@ -38,19 +38,19 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
     <div 
       onClick={onClick}
       className={cn(
-        "w-80 h-auto p-6 flex flex-col rounded-xl shadow-lg transition-all duration-300 relative",
+        "w-64 h-auto p-4 flex flex-col rounded-lg shadow-md transition-all duration-300 relative",
         getStatusColor(),
         isActive ? 'ring-8 ring-blue-600 scale-110 shadow-2xl shadow-blue-500/50 animate-pulse' : 'hover:scale-102',
         "cursor-pointer"
       )}
     >
       {isActive && (
-        <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center animate-bounce">
-          <span className="text-white text-3xl font-bold">✓</span>
+        <div className="absolute -top-3 -right-3 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center animate-bounce">
+          <span className="text-white text-2xl font-bold">✓</span>
         </div>
       )}
       <span className={cn(
-        "text-3xl font-bold mb-4 text-center",
+        "text-xl font-bold mb-2 text-center",
         status === 'pass' ? 'text-green-800' : 
         status === 'fail' ? 'text-red-800' : 
         'text-gray-800'
@@ -58,20 +58,20 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
         PCB{number}
       </span>
       
-      <div className="space-y-3 text-base">
+      <div className="space-y-2 text-sm">
         {testResults.map((test, index) => (
-          <div key={index} className="flex items-center gap-4">
+          <div key={index} className="flex items-center gap-3">
             <div className={cn(
-              "p-2 rounded-full",
+              "p-1 rounded-full",
               test.passed ? "bg-green-100" : "bg-red-100"
             )}>
               {test.passed ? (
-                <Check className="text-green-600 h-6 w-6" />
+                <Check className="text-green-600 h-4 w-4" />
               ) : (
-                <X className="text-red-600 h-6 w-6" />
+                <X className="text-red-600 h-4 w-4" />
               )}
             </div>
-            <span className="text-gray-700 font-medium">{test.name}</span>
+            <span className="text-gray-700">{test.name}</span>
           </div>
         ))}
       </div>
