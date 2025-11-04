@@ -262,7 +262,6 @@ const Index = () => {
                   status={status}
                   isActive={activePCB === index + 1}
                   testResults={pcbTestResults[index]}
-                  onClick={() => handleSquareClick(index)}
                 />
               ))}
             </div>

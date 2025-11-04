@@ -36,19 +36,11 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
 
   return (
     <div 
-      onClick={onClick}
       className={cn(
         "w-64 h-auto p-4 flex flex-col rounded-lg shadow-md transition-all duration-300 relative",
-        getStatusColor(),
-        isActive ? 'ring-8 ring-blue-600 scale-110 shadow-2xl shadow-blue-500/50 animate-pulse' : 'hover:scale-102',
-        "cursor-pointer"
+        getStatusColor()
       )}
     >
-      {isActive && (
-        <div className="absolute -top-3 -right-3 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center animate-bounce">
-          <span className="text-white text-2xl font-bold">✓</span>
-        </div>
-      )}
       <span className={cn(
         "text-xl font-bold mb-2 text-center",
         status === 'pass' ? 'text-green-800' : 
