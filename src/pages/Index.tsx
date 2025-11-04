@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PCBSquare from '@/components/PCBSquare';
 import ControlPanel from '@/components/ControlPanel';
 import { toast } from '@/hooks/use-toast';
@@ -31,6 +31,13 @@ const Index = () => {
     Array(6).fill(generateTestResults(mockDeviceData))
   );
   
+  // Use ref to track latest statuses for event handlers
+  const pcbStatusesRef = useRef(pcbStatuses);
+  
+  useEffect(() => {
+    pcbStatusesRef.current = pcbStatuses;
+  }, [pcbStatuses]);
+  
   const handlePass = async () => {
     console.log('Starting flash process...');
     
@@ -58,6 +65,7 @@ const Index = () => {
         console.log('Event data:', data);
         console.log('Event type:', data.type);
         console.log('PCB number:', data.pcb);
+        console.log('Current pcbStatuses:', pcbStatuses);
         console.log('========================');
 
         if (data.type === 'debug') {
@@ -104,9 +112,6 @@ const Index = () => {
             description: `PCB ${pcbNum} flashed successfully`,
             duration: 1500,
           });
-          
-          // Move to next untested PCB
-          moveToNextUntested();
         } else if (data.type === 'flash_failed') {
           const pcbNum = parseInt(data.pcb);
           console.log(`Flash failed for PCB ${pcbNum}`);
@@ -125,9 +130,6 @@ const Index = () => {
             variant: "destructive",
             duration: 1500,
           });
-          
-          // Move to next untested PCB
-          moveToNextUntested();
         } else if (data.type === 'all_done') {
           console.log('Done message received for current PCB - continuing...');
           // Don't close - the Python script continues to next PCB
@@ -201,6 +203,22 @@ const Index = () => {
       });
     }
   };
+  
+  // Automatically move to next untested PCB when current one is tested
+  useEffect(() => {
+    const currentStatus = pcbStatuses[activePCB - 1];
+    if (currentStatus !== 'untested') {
+      // Current PCB is tested, find next untested
+      const currentIndex = activePCB - 1;
+      for (let i = 1; i <= pcbStatuses.length; i++) {
+        const checkIndex = (currentIndex + i) % pcbStatuses.length;
+        if (pcbStatuses[checkIndex] === 'untested') {
+          setActivePCB(checkIndex + 1);
+          break;
+        }
+      }
+    }
+  }, [pcbStatuses, activePCB]);
   
   const moveToNextUntested = () => {
     const currentIndex = activePCB - 1;
