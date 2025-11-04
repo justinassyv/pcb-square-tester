@@ -211,6 +211,16 @@ const Index = () => {
         
         <Card className="p-6 bg-white shadow-md rounded-lg">
           <div className="mb-6">
+            {/* Large Active PCB Indicator */}
+            <div className="mb-6 p-6 bg-blue-600 rounded-lg text-center">
+              <h2 className="text-4xl font-bold text-white mb-2">
+                PROCESSING PCB {activePCB}
+              </h2>
+              <div className="w-16 h-16 mx-auto bg-white rounded-full animate-pulse flex items-center justify-center">
+                <span className="text-3xl font-bold text-blue-600">{activePCB}</span>
+              </div>
+            </div>
+
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-700">Test Status</h2>
               <div className="flex space-x-4">
