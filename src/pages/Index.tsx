@@ -91,13 +91,16 @@ const Index = () => {
           });
         } else if (data.type === 'flash_complete') {
           const pcbNum = parseInt(data.pcb);
-          console.log(`Flash complete for PCB ${pcbNum}`);
+          console.log('=== FLASH COMPLETE EVENT ===');
+          console.log('PCB Number:', pcbNum);
+          console.log('Before update - pcbStatuses:', pcbStatuses);
           
           // Mark PCB as passed
           setPcbStatuses(prevStatuses => {
+            console.log('Inside setState - prevStatuses:', prevStatuses);
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'pass';
-            console.log(`Updated PCB ${pcbNum} status to PASS. New statuses:`, newStatuses);
+            console.log('Inside setState - newStatuses:', newStatuses);
             return newStatuses;
           });
 
@@ -114,13 +117,16 @@ const Index = () => {
           });
         } else if (data.type === 'flash_failed') {
           const pcbNum = parseInt(data.pcb);
-          console.log(`Flash failed for PCB ${pcbNum}`);
+          console.log('=== FLASH FAILED EVENT ===');
+          console.log('PCB Number:', pcbNum);
+          console.log('Before update - pcbStatuses:', pcbStatuses);
           
           // Mark PCB as failed
           setPcbStatuses(prevStatuses => {
+            console.log('Inside setState - prevStatuses:', prevStatuses);
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'fail';
-            console.log(`Updated PCB ${pcbNum} status to FAIL. New statuses:`, newStatuses);
+            console.log('Inside setState - newStatuses:', newStatuses);
             return newStatuses;
           });
           
@@ -259,6 +265,10 @@ const Index = () => {
   const allTested = pcbStatuses.every(status => status !== 'untested');
   const passCount = pcbStatuses.filter(status => status === 'pass').length;
   const failCount = pcbStatuses.filter(status => status === 'fail').length;
+  
+  console.log('=== RENDER ===');
+  console.log('pcbStatuses:', pcbStatuses);
+  console.log('Counts - Pass:', passCount, 'Fail:', failCount, 'Untested:', 6 - passCount - failCount);
   
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
