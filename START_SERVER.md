@@ -34,10 +34,12 @@ The frontend will run on `http://localhost:8080`
 
 ## How It Works
 
-- When you press the **FLASH PCB** button, the frontend sends a request to the backend server
-- The backend server executes the Python script at `~/Documents/sonora/jig.py`
-- The script output is captured and sent back to the frontend
-- Success or failure messages are displayed in the UI
+- When you press the **FLASH PCB** button, the frontend connects to the backend's real-time progress endpoint
+- The backend server executes the Python script at `~/Documents/sonora/jig.py` which processes all 6 PCBs in sequence
+- As the script runs, real-time progress updates are sent to the UI via Server-Sent Events (SSE)
+- The UI automatically switches to show which PCB is currently being flashed (PCB1 → PCB2 → ... → PCB6)
+- Each PCB's status (pass/fail) is updated in real-time as the script processes it
+- Toast notifications appear for each step of the process
 
 ## Accessing from Other Devices
 

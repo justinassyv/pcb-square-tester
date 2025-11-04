@@ -33,49 +33,86 @@ const Index = () => {
   
   const handlePass = async () => {
     toast({
-      title: "Flashing PCB",
-      description: "Executing jig.py script...",
+      title: "Starting Flash Process",
+      description: "Processing all PCBs in sequence...",
     });
     
     try {
-      const response = await fetch('http://localhost:3001/api/flash-pcb', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        const newStatuses = [...pcbStatuses];
-        newStatuses[activePCB - 1] = 'pass';
-        setPcbStatuses(newStatuses);
-        
-        // Use the mock data to generate test results
-        const newResults = [...pcbTestResults];
-        newResults[activePCB - 1] = generateTestResults(mockDeviceData);
-        setPcbTestResults(newResults);
-        
+      // Connect to SSE endpoint for real-time progress
+      const eventSource = new EventSource('http://localhost:3001/api/flash-progress');
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Progress update:', data);
+
+        if (data.type === 'channel_selected') {
+          // Update active PCB based on current channel
+          setActivePCB(data.pcb);
+          toast({
+            title: "Switching to PCB",
+            description: `Now processing PCB ${data.pcb}`,
+          });
+        } else if (data.type === 'flashing') {
+          toast({
+            title: "Flashing",
+            description: `Flashing PCB ${data.pcb}...`,
+          });
+        } else if (data.type === 'flash_complete') {
+          // Mark current PCB as passed
+          const newStatuses = [...pcbStatuses];
+          newStatuses[activePCB - 1] = 'pass';
+          setPcbStatuses(newStatuses);
+
+          const newResults = [...pcbTestResults];
+          newResults[activePCB - 1] = generateTestResults(mockDeviceData);
+          setPcbTestResults(newResults);
+
+          toast({
+            title: "Flash Complete",
+            description: `PCB ${activePCB} flashed successfully`,
+          });
+        } else if (data.type === 'flash_failed') {
+          // Mark current PCB as failed
+          const newStatuses = [...pcbStatuses];
+          newStatuses[activePCB - 1] = 'fail';
+          setPcbStatuses(newStatuses);
+          
+          toast({
+            title: "Flash Failed",
+            description: `PCB ${activePCB} failed to flash`,
+            variant: "destructive",
+          });
+        } else if (data.type === 'complete') {
+          // All done
+          eventSource.close();
+          toast({
+            title: "All PCBs Processed",
+            description: "Flash sequence complete",
+          });
+        } else if (data.type === 'error') {
+          eventSource.close();
+          toast({
+            title: "Error",
+            description: data.message,
+            variant: "destructive",
+          });
+        }
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('SSE error:', error);
+        eventSource.close();
         toast({
-          title: "Flash Successful",
-          description: `PCB #${activePCB} flashed successfully.`,
-          variant: "default",
-        });
-        
-        moveToNextUntested();
-      } else {
-        toast({
-          title: "Flash Failed",
-          description: data.message || "Failed to flash PCB",
+          title: "Connection Error",
+          description: "Lost connection to server. Make sure the server is running on port 3001.",
           variant: "destructive",
         });
-      }
+      };
     } catch (error) {
-      console.error('Error flashing PCB:', error);
+      console.error('Flash error:', error);
       toast({
-        title: "Connection Error",
-        description: "Could not connect to backend server. Make sure the server is running on port 3001.",
+        title: "Error",
+        description: "Failed to start flash process",
         variant: "destructive",
       });
     }

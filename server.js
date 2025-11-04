@@ -14,57 +14,75 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-// Endpoint to execute the Python script
-app.post('/api/flash-pcb', (req, res) => {
-  console.log('Executing jig.py script...');
+// SSE endpoint for real-time progress updates
+app.get('/api/flash-progress', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  console.log('Starting flash process with real-time updates...');
   
-  // Get the home directory and construct the path
   const homeDir = os.homedir();
   const scriptPath = join(homeDir, 'Documents', 'sonora', 'jig.py');
-  
   const pythonProcess = spawn('python3', [scriptPath]);
-  
-  let output = '';
-  let errorOutput = '';
-  
+
   pythonProcess.stdout.on('data', (data) => {
-    const message = data.toString();
-    console.log('Python stdout:', message);
-    output += message;
-  });
-  
-  pythonProcess.stderr.on('data', (data) => {
-    const message = data.toString();
-    console.error('Python stderr:', message);
-    errorOutput += message;
-  });
-  
-  pythonProcess.on('close', (code) => {
-    console.log(`Python process exited with code ${code}`);
+    const output = data.toString();
+    console.log('Python output:', output);
     
-    if (code === 0) {
-      res.json({ 
-        success: true, 
-        message: 'PCB flashed successfully',
-        output: output
-      });
-    } else {
-      res.status(500).json({ 
-        success: false, 
-        message: 'Failed to flash PCB',
-        error: errorOutput || output,
-        exitCode: code
-      });
+    // Parse which channel is being selected
+    const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
+    if (channelMatch) {
+      const channel = parseInt(channelMatch[1]);
+      console.log(`Switching to PCB ${channel}`);
+      res.write(`data: ${JSON.stringify({ type: 'channel_selected', pcb: channel })}\n\n`);
+    }
+    
+    // Parse flashing status
+    if (output.includes('Flashing board on channel')) {
+      const flashMatch = output.match(/Flashing board on channel (\d+)/);
+      if (flashMatch) {
+        const channel = parseInt(flashMatch[1]);
+        console.log(`Flashing PCB ${channel}`);
+        res.write(`data: ${JSON.stringify({ type: 'flashing', pcb: channel })}\n\n`);
+      }
+    }
+    
+    // Parse completion
+    if (output.includes('Programming completed successfully')) {
+      console.log('Flash successful');
+      res.write(`data: ${JSON.stringify({ type: 'flash_complete' })}\n\n`);
+    }
+    
+    // Parse failure
+    if (output.includes('Flashing failed')) {
+      console.log('Flash failed');
+      res.write(`data: ${JSON.stringify({ type: 'flash_failed' })}\n\n`);
     }
   });
-  
+
+  pythonProcess.stderr.on('data', (data) => {
+    const message = data.toString();
+    console.error('Python error:', message);
+    res.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`);
+  });
+
+  pythonProcess.on('close', (code) => {
+    console.log(`Python process exited with code ${code}`);
+    res.write(`data: ${JSON.stringify({ type: 'complete', code })}\n\n`);
+    res.end();
+  });
+
   pythonProcess.on('error', (error) => {
     console.error('Failed to start Python process:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to execute script',
-      error: error.message
-    });
+    res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+    res.end();
+  });
+
+  req.on('close', () => {
+    console.log('Client disconnected, killing Python process');
+    pythonProcess.kill();
   });
 });
 
