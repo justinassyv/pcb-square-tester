@@ -64,59 +64,61 @@ const Index = () => {
           console.log('[PYTHON]:', data.message);
         } else if (data.type === 'channel_selected') {
           // Update active PCB based on current channel
-          console.log(`[FRONTEND] Switching to PCB ${data.pcb}`);
-          console.log('[FRONTEND] Calling setActivePCB with:', data.pcb);
-          setActivePCB(data.pcb);
-          console.log('[FRONTEND] setActivePCB called');
+          const pcbNum = parseInt(data.pcb);
+          console.log(`[FRONTEND] Switching to PCB ${pcbNum}`);
+          setActivePCB(pcbNum);
           toast({
-            title: `Switching to PCB ${data.pcb}`,
-            description: `Now processing PCB ${data.pcb}`,
-            duration: 2000,
+            title: `Switching to PCB ${pcbNum}`,
+            description: `Now processing PCB ${pcbNum}`,
+            duration: 1500,
           });
         } else if (data.type === 'flashing') {
-          console.log(`[FRONTEND] Flashing PCB ${data.pcb}`);
-          console.log('[FRONTEND] Calling setActivePCB with:', data.pcb);
-          setActivePCB(data.pcb);
-          console.log('[FRONTEND] setActivePCB called');
+          const pcbNum = parseInt(data.pcb);
+          console.log(`[FRONTEND] Flashing PCB ${pcbNum}`);
+          setActivePCB(pcbNum);
           toast({
             title: "Flashing",
-            description: `Flashing PCB ${data.pcb}...`,
-            duration: 2000,
+            description: `Flashing PCB ${pcbNum}...`,
+            duration: 1500,
           });
         } else if (data.type === 'flash_complete') {
-          console.log(`Flash complete for PCB ${data.pcb}`);
-          // Mark PCB as passed using the PCB number from the event
+          const pcbNum = parseInt(data.pcb);
+          console.log(`Flash complete for PCB ${pcbNum}`);
+          
+          // Mark PCB as passed
           setPcbStatuses(prevStatuses => {
             const newStatuses = [...prevStatuses];
-            newStatuses[data.pcb - 1] = 'pass';
+            newStatuses[pcbNum - 1] = 'pass';
             return newStatuses;
           });
 
           setPcbTestResults(prevResults => {
             const newResults = [...prevResults];
-            newResults[data.pcb - 1] = generateTestResults(mockDeviceData);
+            newResults[pcbNum - 1] = generateTestResults(mockDeviceData);
             return newResults;
           });
 
           toast({
             title: "Flash Complete",
-            description: `PCB ${data.pcb} flashed successfully`,
-            duration: 2000,
+            description: `PCB ${pcbNum} flashed successfully`,
+            duration: 1500,
           });
         } else if (data.type === 'flash_failed') {
-          console.log(`Flash failed for PCB ${data.pcb}`);
-          // Mark PCB as failed using the PCB number from the event
+          const pcbNum = parseInt(data.pcb);
+          console.log(`Flash failed for PCB ${pcbNum}`);
+          
+          // Mark PCB as failed
           setPcbStatuses(prevStatuses => {
             const newStatuses = [...prevStatuses];
-            newStatuses[data.pcb - 1] = 'fail';
+            newStatuses[pcbNum - 1] = 'fail';
             return newStatuses;
           });
           
           toast({
             title: "Flash Failed",
-            description: `PCB ${data.pcb} failed to flash`,
+            description: `PCB ${pcbNum} failed to flash`,
             variant: "destructive",
-            duration: 2000,
+            duration: 1500,
           });
         } else if (data.type === 'all_done') {
           console.log('All processing complete - Done message received');
