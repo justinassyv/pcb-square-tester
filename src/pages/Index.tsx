@@ -52,10 +52,10 @@ const Index = () => {
     });
     
     try {
-      // Use relative URL or detect the correct host
-      const apiUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3001/api/flash-progress'
-        : `http://${window.location.hostname}:3001/api/flash-progress`;
+      // IMPORTANT: Replace this with your Raspberry Pi's IP address
+      // Find it by running: hostname -I
+      const RPI_IP = 'YOUR_RPI_IP_HERE'; // e.g., '192.168.1.100'
+      const apiUrl = `http://${RPI_IP}:3001/api/flash-progress`;
       
       console.log('Connecting to SSE endpoint:', apiUrl);
       const eventSource = new EventSource(apiUrl);
@@ -214,9 +214,9 @@ const Index = () => {
   
   const handleCancel = async () => {
     try {
-      const apiUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3001/api/kill-process'
-        : `http://${window.location.hostname}:3001/api/kill-process`;
+      // Use same RPI_IP as above
+      const RPI_IP = 'YOUR_RPI_IP_HERE'; // e.g., '192.168.1.100'
+      const apiUrl = `http://${RPI_IP}:3001/api/kill-process`;
       
       await fetch(apiUrl, { method: 'POST' });
       
