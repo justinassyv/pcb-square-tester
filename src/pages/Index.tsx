@@ -33,14 +33,23 @@ const Index = () => {
   
   const handlePass = async () => {
     console.log('Starting flash process...');
+    
+    // Reset to PCB 1 at start
+    setActivePCB(1);
+    
     toast({
       title: "Starting Flash Process",
       description: "Processing all PCBs in sequence...",
     });
     
     try {
-      // Connect to SSE endpoint for real-time progress
-      const eventSource = new EventSource('http://localhost:3001/api/flash-progress');
+      // Use relative URL or detect the correct host
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3001/api/flash-progress'
+        : `http://${window.location.hostname}:3001/api/flash-progress`;
+      
+      console.log('Connecting to SSE endpoint:', apiUrl);
+      const eventSource = new EventSource(apiUrl);
       console.log('EventSource created, waiting for events...');
 
       eventSource.onmessage = (event) => {
