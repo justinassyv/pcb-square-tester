@@ -46,11 +46,13 @@ app.get('/api/flash-progress', (req, res) => {
     }
     
     // Parse which channel is being recovered (indicates start of flashing)
-    if (output.includes('Recovering device')) {
+    // Only match the first occurrence with "..."
+    if (output.includes('Recovering device...')) {
       currentPCB++;
       if (currentPCB > 6) currentPCB = 1; // Reset to 1 if exceeds 6
       console.log(`✓✓✓ MATCHED: Starting flash for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flashing', pcb: currentPCB });
+      console.log(`>>> SENDING TO FRONTEND: ${message}`);
       res.write(`data: ${message}\n\n`);
       res.flush?.();
     }
