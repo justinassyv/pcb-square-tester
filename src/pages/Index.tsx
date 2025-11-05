@@ -56,30 +56,30 @@ const Index = () => {
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
     
-    // Check for LR_ACC - look for failure patterns first
-    if (message.includes('LR_ACC failed') || (message.includes('LR_ACC') && message.includes('failed initialize'))) {
+    // Check for LR_ACC - case insensitive
+    if (message.toLowerCase().includes('lr_acc failed') || (message.toLowerCase().includes('lr_acc') && message.toLowerCase().includes('failed initialize'))) {
       console.log('LR_ACC FAILED detected');
       results['LR_ACC initialized'] = false;
-    } else if (message.includes('LR_ACC initialized') && !message.includes('failed')) {
-      console.log('LR_ACC initialized detected');
+    } else if (message.toLowerCase().includes('lr_acc initialized')) {
+      console.log('LR_ACC SUCCESS detected');
       results['LR_ACC initialized'] = true;
     }
     
-    // Check for HR_ACC
-    if (message.includes('HR_ACC failed') || (message.includes('HR_ACC') && message.includes('failed initialize'))) {
+    // Check for HR_ACC - case insensitive
+    if (message.toLowerCase().includes('hr_acc failed') || (message.toLowerCase().includes('hr_acc') && message.toLowerCase().includes('failed initialize'))) {
       console.log('HR_ACC FAILED detected');
       results['HR_ACC initialized'] = false;
-    } else if (message.includes('HR_ACC initialized') && !message.includes('failed')) {
-      console.log('HR_ACC initialized detected');
+    } else if (message.toLowerCase().includes('hr_acc initialized')) {
+      console.log('HR_ACC SUCCESS detected in message:', message);
       results['HR_ACC initialized'] = true;
     }
     
-    // Check for PSRAM
-    if (message.includes('PSRAM failed') || (message.includes('PSRAM') && message.includes('failed initialize'))) {
+    // Check for PSRAM - case insensitive
+    if (message.toLowerCase().includes('psram failed') || (message.toLowerCase().includes('psram') && message.toLowerCase().includes('failed initialize'))) {
       console.log('PSRAM FAILED detected');
       results['PSRAM initialized'] = false;
-    } else if (message.includes('PSRAM initialized') && !message.includes('failed')) {
-      console.log('PSRAM initialized detected');
+    } else if (message.toLowerCase().includes('psram initialized')) {
+      console.log('PSRAM SUCCESS detected');
       results['PSRAM initialized'] = true;
     }
     
