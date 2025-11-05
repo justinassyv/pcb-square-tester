@@ -52,35 +52,43 @@ const Index = () => {
     const results: Partial<Record<string, boolean>> = {};
     const lowerMsg = message.toLowerCase();
     
-    console.log('Parsing message:', message);
+    console.log('=== PARSING MESSAGE ===');
+    console.log('Original:', message);
+    console.log('Lowercase:', lowerMsg);
     
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
     
-    // Check for LR_ACC - more flexible pattern matching
+    // Check for LR_ACC
     if (lowerMsg.includes('lr_acc') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
-      console.log('LR_ACC FAILED detected');
+      console.log('✗ LR_ACC FAILED');
       results['LR_ACC initialized'] = false;
     } else if (lowerMsg.includes('lr_acc') && lowerMsg.includes('initialized')) {
-      console.log('LR_ACC SUCCESS detected');
+      console.log('✓ LR_ACC SUCCESS');
       results['LR_ACC initialized'] = true;
     }
     
-    // Check for HR_ACC - more flexible pattern matching
+    // Check for HR_ACC with detailed logging
+    console.log('Checking HR_ACC:');
+    console.log('  - Contains hr_acc?', lowerMsg.includes('hr_acc'));
+    console.log('  - Contains initialized?', lowerMsg.includes('initialized'));
+    console.log('  - Contains failed?', lowerMsg.includes('failed'));
+    console.log('  - Contains error?', lowerMsg.includes('error'));
+    
     if (lowerMsg.includes('hr_acc') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
-      console.log('HR_ACC FAILED detected');
+      console.log('✗ HR_ACC FAILED');
       results['HR_ACC initialized'] = false;
     } else if (lowerMsg.includes('hr_acc') && lowerMsg.includes('initialized')) {
-      console.log('HR_ACC SUCCESS detected in message:', message);
+      console.log('✓ HR_ACC SUCCESS - Setting to TRUE');
       results['HR_ACC initialized'] = true;
     }
     
-    // Check for PSRAM - more flexible pattern matching
+    // Check for PSRAM
     if (lowerMsg.includes('psram') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
-      console.log('PSRAM FAILED detected');
+      console.log('✗ PSRAM FAILED');
       results['PSRAM initialized'] = false;
     } else if (lowerMsg.includes('psram') && lowerMsg.includes('initialized')) {
-      console.log('PSRAM SUCCESS detected');
+      console.log('✓ PSRAM SUCCESS');
       results['PSRAM initialized'] = true;
     }
     
@@ -89,6 +97,7 @@ const Index = () => {
     if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = true;
     
     console.log('Parsed results:', results);
+    console.log('======================');
     return results;
   };
   
