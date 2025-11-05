@@ -50,35 +50,36 @@ const Index = () => {
   }, [pcbStatuses]);
   const parseTestResults = (message: string): Partial<Record<string, boolean>> => {
     const results: Partial<Record<string, boolean>> = {};
+    const lowerMsg = message.toLowerCase();
     
     console.log('Parsing message:', message);
     
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
     
-    // Check for LR_ACC - case insensitive
-    if (message.toLowerCase().includes('lr_acc failed') || (message.toLowerCase().includes('lr_acc') && message.toLowerCase().includes('failed initialize'))) {
+    // Check for LR_ACC - more flexible pattern matching
+    if (lowerMsg.includes('lr_acc') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
       console.log('LR_ACC FAILED detected');
       results['LR_ACC initialized'] = false;
-    } else if (message.toLowerCase().includes('lr_acc initialized')) {
+    } else if (lowerMsg.includes('lr_acc') && lowerMsg.includes('initialized')) {
       console.log('LR_ACC SUCCESS detected');
       results['LR_ACC initialized'] = true;
     }
     
-    // Check for HR_ACC - case insensitive
-    if (message.toLowerCase().includes('hr_acc failed') || (message.toLowerCase().includes('hr_acc') && message.toLowerCase().includes('failed initialize'))) {
+    // Check for HR_ACC - more flexible pattern matching
+    if (lowerMsg.includes('hr_acc') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
       console.log('HR_ACC FAILED detected');
       results['HR_ACC initialized'] = false;
-    } else if (message.toLowerCase().includes('hr_acc initialized')) {
+    } else if (lowerMsg.includes('hr_acc') && lowerMsg.includes('initialized')) {
       console.log('HR_ACC SUCCESS detected in message:', message);
       results['HR_ACC initialized'] = true;
     }
     
-    // Check for PSRAM - case insensitive
-    if (message.toLowerCase().includes('psram failed') || (message.toLowerCase().includes('psram') && message.toLowerCase().includes('failed initialize'))) {
+    // Check for PSRAM - more flexible pattern matching
+    if (lowerMsg.includes('psram') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
       console.log('PSRAM FAILED detected');
       results['PSRAM initialized'] = false;
-    } else if (message.toLowerCase().includes('psram initialized')) {
+    } else if (lowerMsg.includes('psram') && lowerMsg.includes('initialized')) {
       console.log('PSRAM SUCCESS detected');
       results['PSRAM initialized'] = true;
     }
