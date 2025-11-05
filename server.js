@@ -44,6 +44,10 @@ app.get('/api/flash-progress', (req, res) => {
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
     
+    // Send all raw output to frontend
+    res.write(`data: ${JSON.stringify({ type: 'raw_output', message: output })}\n\n`);
+    res.flush?.();
+    
     // Parse which channel is being selected (extract the channel number)
     const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
     if (channelMatch) {

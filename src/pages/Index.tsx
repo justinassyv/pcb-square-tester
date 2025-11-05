@@ -30,6 +30,8 @@ const Index = () => {
   const [pcbTestResults, setPcbTestResults] = useState<TestResult[][]>(
     Array(6).fill(generateTestResults(mockDeviceData))
   );
+  const [terminalMessages, setTerminalMessages] = useState<string[]>([]);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
   
   // Use ref to track latest statuses for event handlers
   const pcbStatusesRef = useRef(pcbStatuses);
@@ -57,6 +59,12 @@ const Index = () => {
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        
+        // Capture raw terminal output
+        if (data.type === 'raw_output') {
+          setTerminalMessages(prev => [...prev, data.message.trim()].filter(m => m.length > 0));
+          setTimeout(() => terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        }
 
         if (data.type === 'channel_selected') {
           const pcbNum = parseInt(data.pcb);
@@ -218,6 +226,7 @@ const Index = () => {
   const handleReset = () => {
     setPcbStatuses(Array(6).fill('untested'));
     setActivePCB(1);
+    setTerminalMessages([]);
     
     toast({
       title: "Reset Complete",
@@ -285,6 +294,19 @@ const Index = () => {
               ))}
             </div>
           </div>
+          
+          {/* Terminal Output Display */}
+          {terminalMessages.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-700 mb-3">Terminal Output</h2>
+              <div className="bg-black text-green-400 font-mono text-sm p-4 rounded-lg h-64 overflow-y-auto">
+                {terminalMessages.map((msg, idx) => (
+                  <div key={idx} className="mb-1">{msg}</div>
+                ))}
+                <div ref={terminalEndRef} />
+              </div>
+            </div>
+          )}
           
           <div className="flex justify-center">
             <ControlPanel 
