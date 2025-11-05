@@ -124,10 +124,21 @@ const Index = () => {
         } else if (data.type === 'complete') {
           // Process exit - this means Python script fully finished
           eventSource.close();
-          toast({
-            title: "All PCBs Processed",
-            description: "Flash sequence complete",
-          });
+          
+          // Calculate final results using current state
+          setTimeout(() => {
+            const currentStatuses = pcbStatusesRef.current;
+            const finalPassCount = currentStatuses.filter(s => s === 'pass').length;
+            const finalFailCount = currentStatuses.filter(s => s === 'fail').length;
+            const totalTested = finalPassCount + finalFailCount;
+            const successRate = totalTested > 0 ? Math.round((finalPassCount / totalTested) * 100) : 0;
+            
+            toast({
+              title: "🎉 All PCBs Processed",
+              description: `Results: ${finalPassCount} passed, ${finalFailCount} failed (${successRate}% success rate)`,
+              duration: 5000,
+            });
+          }, 100);
         } else if (data.type === 'error') {
           eventSource.close();
           toast({
