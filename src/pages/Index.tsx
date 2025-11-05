@@ -28,10 +28,37 @@ const Index = () => {
   const [pcbStatuses, setPcbStatuses] = useState<PCBStatus[]>(Array(6).fill('untested'));
   const [activePCB, setActivePCB] = useState<number>(1);
   const [pcbTestResults, setPcbTestResults] = useState<TestResult[][]>(
-    Array(6).fill(generateTestResults(mockDeviceData))
+    Array(6).fill([]).map(() => [
+      { name: 'RTC configured', passed: false },
+      { name: 'RTC initialized', passed: false },
+      { name: 'lowRateAccel initialized', passed: false },
+      { name: 'hiRateAccel initialized', passed: false },
+      { name: 'PSRAM initialized', passed: false },
+      { name: 'exFlash initialized', passed: false },
+      { name: 'Ext NFC configured', passed: false },
+      { name: 'Ext NFC initialized', passed: false },
+    ])
   );
   const [terminalMessages, setTerminalMessages] = useState<string[]>([]);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  
+  const parseTestResults = (message: string): Partial<Record<string, boolean>> => {
+    const results: Partial<Record<string, boolean>> = {};
+    
+    if (message.includes('RTC configured')) results['RTC configured'] = true;
+    if (message.includes('RTC initialized')) results['RTC initialized'] = true;
+    if (message.includes('LR_ACC') && message.includes('initialized') && !message.includes('failed')) results['lowRateAccel initialized'] = true;
+    if (message.includes('LR_ACC') && message.includes('failed')) results['lowRateAccel initialized'] = false;
+    if (message.includes('HR_ACC') && message.includes('initialized') && !message.includes('failed')) results['hiRateAccel initialized'] = true;
+    if (message.includes('HR_ACC') && message.includes('failed')) results['hiRateAccel initialized'] = false;
+    if (message.includes('PSRAM') && message.includes('initialized') && !message.includes('failed')) results['PSRAM initialized'] = true;
+    if (message.includes('PSRAM') && message.includes('failed')) results['PSRAM initialized'] = false;
+    if (message.includes('exFlash') && message.includes('initialized')) results['exFlash initialized'] = true;
+    if (message.includes('Ext NFC configured')) results['Ext NFC configured'] = true;
+    if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = true;
+    
+    return results;
+  };
   
   // Use ref to track latest statuses for event handlers
   const pcbStatusesRef = useRef(pcbStatuses);
@@ -94,6 +121,21 @@ const Index = () => {
           
           setTerminalMessages(prev => [...prev, ...formatted.split('\n').filter(m => m.trim().length > 0)]);
           setTimeout(() => terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+          
+          // Parse and update test results for active PCB
+          const testUpdates = parseTestResults(data.message);
+          if (Object.keys(testUpdates).length > 0) {
+            setPcbTestResults(prevResults => {
+              const newResults = [...prevResults];
+              const currentPCBIndex = activePCB - 1;
+              const updatedTests = newResults[currentPCBIndex].map(test => ({
+                ...test,
+                passed: testUpdates[test.name] !== undefined ? testUpdates[test.name]! : test.passed
+              }));
+              newResults[currentPCBIndex] = updatedTests;
+              return newResults;
+            });
+          }
         }
 
         if (data.type === 'channel_selected') {
@@ -257,6 +299,18 @@ const Index = () => {
     setPcbStatuses(Array(6).fill('untested'));
     setActivePCB(1);
     setTerminalMessages([]);
+    setPcbTestResults(
+      Array(6).fill([]).map(() => [
+        { name: 'RTC configured', passed: false },
+        { name: 'RTC initialized', passed: false },
+        { name: 'lowRateAccel initialized', passed: false },
+        { name: 'hiRateAccel initialized', passed: false },
+        { name: 'PSRAM initialized', passed: false },
+        { name: 'exFlash initialized', passed: false },
+        { name: 'Ext NFC configured', passed: false },
+        { name: 'Ext NFC initialized', passed: false },
+      ])
+    );
     
     toast({
       title: "Reset Complete",
