@@ -150,14 +150,22 @@ const Index = () => {
           // Parse and update test results for currently processing PCB
           const testUpdates = parseTestResults(data.message);
           if (Object.keys(testUpdates).length > 0) {
+            console.log('Current processing PCB:', currentProcessingPCBRef.current);
             setPcbTestResults(prevResults => {
               const newResults = [...prevResults];
               const processingPCBIndex = currentProcessingPCBRef.current - 1;
-              const updatedTests = newResults[processingPCBIndex].map(test => ({
-                ...test,
-                passed: testUpdates[test.name] !== undefined ? testUpdates[test.name]! : test.passed
-              }));
+              console.log('Updating PCB index:', processingPCBIndex);
+              console.log('Current tests for this PCB:', newResults[processingPCBIndex]);
+              const updatedTests = newResults[processingPCBIndex].map(test => {
+                const newPassed = testUpdates[test.name] !== undefined ? testUpdates[test.name]! : test.passed;
+                console.log(`Test "${test.name}": ${test.passed} -> ${newPassed}`);
+                return {
+                  ...test,
+                  passed: newPassed
+                };
+              });
               newResults[processingPCBIndex] = updatedTests;
+              console.log('Updated tests:', updatedTests);
               return newResults;
             });
           }
