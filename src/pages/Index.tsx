@@ -15,7 +15,6 @@ const generateTestResults = (data: DeviceData): TestResult[] => {
     { name: 'lowRateAccel initialized', passed: data.lowRateAccel.initialized },
     { name: 'lowRateAccel passed self-test', passed: data.lowRateAccel.selfTestPassed },
     { name: 'hiRateAccel initialized', passed: data.hiRateAccel.initialized },
-    { name: 'Ext temperature sensor initialized', passed: data.extTemperatureSensor.initialized },
     { name: 'PSRAM initialized', passed: data.PSRAM.initialized },
     { name: 'PSRAM test passed', passed: data.PSRAM.testPassed },
     { name: 'exFlash initialized', passed: data.exFlash.initialized },
