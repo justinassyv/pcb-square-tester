@@ -51,27 +51,35 @@ const Index = () => {
   const parseTestResults = (message: string): Partial<Record<string, boolean>> => {
     const results: Partial<Record<string, boolean>> = {};
     
+    console.log('Parsing message:', message);
+    
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
     
     // Check for LR_ACC - look for failure patterns first
     if (message.includes('LR_ACC failed') || (message.includes('LR_ACC') && message.includes('failed initialize'))) {
+      console.log('LR_ACC FAILED detected');
       results['LR_ACC initialized'] = false;
     } else if (message.includes('LR_ACC initialized') && !message.includes('failed')) {
+      console.log('LR_ACC initialized detected');
       results['LR_ACC initialized'] = true;
     }
     
     // Check for HR_ACC
     if (message.includes('HR_ACC failed') || (message.includes('HR_ACC') && message.includes('failed initialize'))) {
+      console.log('HR_ACC FAILED detected');
       results['HR_ACC initialized'] = false;
     } else if (message.includes('HR_ACC initialized') && !message.includes('failed')) {
+      console.log('HR_ACC initialized detected');
       results['HR_ACC initialized'] = true;
     }
     
     // Check for PSRAM
     if (message.includes('PSRAM failed') || (message.includes('PSRAM') && message.includes('failed initialize'))) {
+      console.log('PSRAM FAILED detected');
       results['PSRAM initialized'] = false;
     } else if (message.includes('PSRAM initialized') && !message.includes('failed')) {
+      console.log('PSRAM initialized detected');
       results['PSRAM initialized'] = true;
     }
     
@@ -79,6 +87,7 @@ const Index = () => {
     if (message.includes('Ext NFC configured')) results['Ext NFC configured'] = true;
     if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = true;
     
+    console.log('Parsed results:', results);
     return results;
   };
   
