@@ -54,28 +54,28 @@ const Index = () => {
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
     
-    // Check for LR_ACC - must check for failure FIRST
-    if (message.includes('LR_ACC') && message.includes('failed')) {
+    // Check for LR_ACC - look for failure patterns first
+    if (message.includes('LR_ACC failed') || (message.includes('LR_ACC') && message.includes('failed initialize'))) {
       results['LR_ACC initialized'] = false;
-    } else if (message.includes('LR_ACC') && message.includes('initialized')) {
+    } else if (message.includes('LR_ACC initialized') && !message.includes('failed')) {
       results['LR_ACC initialized'] = true;
     }
     
     // Check for HR_ACC
-    if (message.includes('HR_ACC') && message.includes('failed')) {
+    if (message.includes('HR_ACC failed') || (message.includes('HR_ACC') && message.includes('failed initialize'))) {
       results['HR_ACC initialized'] = false;
-    } else if (message.includes('HR_ACC') && message.includes('initialized')) {
+    } else if (message.includes('HR_ACC initialized') && !message.includes('failed')) {
       results['HR_ACC initialized'] = true;
     }
     
     // Check for PSRAM
-    if (message.includes('PSRAM') && message.includes('failed')) {
+    if (message.includes('PSRAM failed') || (message.includes('PSRAM') && message.includes('failed initialize'))) {
       results['PSRAM initialized'] = false;
-    } else if (message.includes('PSRAM') && message.includes('initialized')) {
+    } else if (message.includes('PSRAM initialized') && !message.includes('failed')) {
       results['PSRAM initialized'] = true;
     }
     
-    if (message.includes('exFlash') && message.includes('initialized')) results['exFlash initialized'] = true;
+    if (message.includes('exFlash initialized')) results['exFlash initialized'] = true;
     if (message.includes('Ext NFC configured')) results['Ext NFC configured'] = true;
     if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = true;
     
