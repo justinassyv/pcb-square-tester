@@ -51,11 +51,10 @@ app.get('/api/flash-progress', (req, res) => {
       console.log(`Found number in output: ${anyNumberMatch[1]}`);
     }
     
-    // Parse which channel is being recovered (indicates start of flashing)
-    // Only match the first occurrence with "..."
-    if (output.includes('Recovering device...')) {
-      currentPCB++;
-      if (currentPCB > 6) currentPCB = 1; // Reset to 1 if exceeds 6
+    // Parse which channel is being selected (extract the channel number)
+    const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
+    if (channelMatch) {
+      currentPCB = parseInt(channelMatch[1]);
       console.log(`✓✓✓ MATCHED: Starting flash for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flashing', pcb: currentPCB });
       console.log(`>>> SENDING TO FRONTEND: ${message}`);
@@ -63,8 +62,8 @@ app.get('/api/flash-progress', (req, res) => {
       res.flush?.();
     }
     
-    // Parse success - UART data was parsed and saved
-    if (output.includes('Parsed data saved to')) {
+    // Parse success - UART data was parsed and saved (with checkmark emoji)
+    if (output.includes('✅ Parsed data saved to')) {
       console.log(`✓✓✓ MATCHED: Flash successful for PCB ${currentPCB}`);
       const message = JSON.stringify({ type: 'flash_complete', pcb: currentPCB });
       res.write(`data: ${message}\n\n`);
