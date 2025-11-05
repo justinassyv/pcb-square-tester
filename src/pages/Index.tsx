@@ -24,18 +24,31 @@ const generateTestResults = (data: DeviceData): TestResult[] => {
 };
 
 const Index = () => {
+  // Load test configuration from localStorage
+  const loadRequiredTests = (): RequiredTests => {
+    const saved = localStorage.getItem('requiredTests');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // Fall back to defaults if parsing fails
+      }
+    }
+    return {
+      'RTC configured': true,
+      'RTC initialized': true,
+      'LR_ACC initialized': true,
+      'HR_ACC initialized': true,
+      'PSRAM initialized': true,
+      'exFlash initialized': true,
+      'Ext NFC configured': true,
+      'Ext NFC initialized': true,
+    };
+  };
+
   const [pcbStatuses, setPcbStatuses] = useState<PCBStatus[]>(Array(6).fill('untested'));
   const [activePCB, setActivePCB] = useState<number>(1);
-  const [requiredTests, setRequiredTests] = useState<RequiredTests>({
-    'RTC configured': true,
-    'RTC initialized': true,
-    'LR_ACC initialized': true,
-    'HR_ACC initialized': true,
-    'PSRAM initialized': true,
-    'exFlash initialized': true,
-    'Ext NFC configured': true,
-    'Ext NFC initialized': true,
-  });
+  const [requiredTests, setRequiredTests] = useState<RequiredTests>(loadRequiredTests());
   const [pcbTestResults, setPcbTestResults] = useState<TestResult[][]>(
     Array(6).fill([]).map(() => [
       { name: 'RTC configured', passed: false },
@@ -59,6 +72,11 @@ const Index = () => {
   useEffect(() => {
     pcbStatusesRef.current = pcbStatuses;
   }, [pcbStatuses]);
+
+  // Save test configuration to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('requiredTests', JSON.stringify(requiredTests));
+  }, [requiredTests]);
   const parseTestResults = (message: string): Partial<Record<string, boolean>> => {
     const results: Partial<Record<string, boolean>> = {};
     const lowerMsg = message.toLowerCase();
@@ -296,6 +314,12 @@ const Index = () => {
               description: `Results: ${finalPassCount} passed, ${finalFailCount} failed (${successRate}% success rate)`,
               duration: 5000,
             });
+
+            // Find first untested PCB or stay on last one
+            const firstUntestedIndex = currentStatuses.findIndex(s => s === 'untested');
+            if (firstUntestedIndex !== -1) {
+              setActivePCB(firstUntestedIndex + 1);
+            }
           }, 100);
         } else if (data.type === 'error') {
           eventSource.close();
