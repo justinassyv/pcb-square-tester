@@ -13,7 +13,6 @@ const generateTestResults = (data: DeviceData): TestResult[] => {
     { name: 'RTC configured', passed: data.RTC.configured },
     { name: 'RTC initialized', passed: data.RTC.initialized },
     { name: 'LR_ACC initialized', passed: data.lowRateAccel.initialized },
-    { name: 'LR_ACC passed self-test', passed: data.lowRateAccel.selfTestPassed },
     { name: 'hiRateAccel initialized', passed: data.hiRateAccel.initialized },
     { name: 'PSRAM initialized', passed: data.PSRAM.initialized },
     { name: 'PSRAM test passed', passed: data.PSRAM.testPassed },
@@ -46,12 +45,28 @@ const Index = () => {
     
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
-    if (message.includes('LR_ACC') && message.includes('initialized') && !message.includes('failed')) results['LR_ACC initialized'] = true;
-    if (message.includes('LR_ACC') && message.includes('failed')) results['LR_ACC initialized'] = false;
-    if (message.includes('HR_ACC') && message.includes('initialized') && !message.includes('failed')) results['hiRateAccel initialized'] = true;
-    if (message.includes('HR_ACC') && message.includes('failed')) results['hiRateAccel initialized'] = false;
-    if (message.includes('PSRAM') && message.includes('initialized') && !message.includes('failed')) results['PSRAM initialized'] = true;
-    if (message.includes('PSRAM') && message.includes('failed')) results['PSRAM initialized'] = false;
+    
+    // Check for LR_ACC - must check for failure FIRST
+    if (message.includes('LR_ACC') && message.includes('failed')) {
+      results['LR_ACC initialized'] = false;
+    } else if (message.includes('LR_ACC') && message.includes('initialized')) {
+      results['LR_ACC initialized'] = true;
+    }
+    
+    // Check for HR_ACC
+    if (message.includes('HR_ACC') && message.includes('failed')) {
+      results['hiRateAccel initialized'] = false;
+    } else if (message.includes('HR_ACC') && message.includes('initialized')) {
+      results['hiRateAccel initialized'] = true;
+    }
+    
+    // Check for PSRAM
+    if (message.includes('PSRAM') && message.includes('failed')) {
+      results['PSRAM initialized'] = false;
+    } else if (message.includes('PSRAM') && message.includes('initialized')) {
+      results['PSRAM initialized'] = true;
+    }
+    
     if (message.includes('exFlash') && message.includes('initialized')) results['exFlash initialized'] = true;
     if (message.includes('Ext NFC configured')) results['Ext NFC configured'] = true;
     if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = true;
