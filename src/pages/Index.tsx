@@ -54,40 +54,33 @@ const Index = () => {
     
     console.log('=== PARSING MESSAGE ===');
     console.log('Original:', message);
-    console.log('Lowercase:', lowerMsg);
     
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
     
-    // Check for LR_ACC
-    if (lowerMsg.includes('lr_acc') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
+    // Check for LR_ACC - look for the specific pattern
+    if (/lr_acc\s+(failed|error)/i.test(message)) {
       console.log('✗ LR_ACC FAILED');
       results['LR_ACC initialized'] = false;
-    } else if (lowerMsg.includes('lr_acc') && lowerMsg.includes('initialized')) {
+    } else if (/lr_acc\s+initialized/i.test(message)) {
       console.log('✓ LR_ACC SUCCESS');
       results['LR_ACC initialized'] = true;
     }
     
-    // Check for HR_ACC with detailed logging
-    console.log('Checking HR_ACC:');
-    console.log('  - Contains hr_acc?', lowerMsg.includes('hr_acc'));
-    console.log('  - Contains initialized?', lowerMsg.includes('initialized'));
-    console.log('  - Contains failed?', lowerMsg.includes('failed'));
-    console.log('  - Contains error?', lowerMsg.includes('error'));
-    
-    if (lowerMsg.includes('hr_acc') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
+    // Check for HR_ACC - look for the specific pattern
+    if (/hr_acc\s+(failed|error)/i.test(message)) {
       console.log('✗ HR_ACC FAILED');
       results['HR_ACC initialized'] = false;
-    } else if (lowerMsg.includes('hr_acc') && lowerMsg.includes('initialized')) {
-      console.log('✓ HR_ACC SUCCESS - Setting to TRUE');
+    } else if (/hr_acc\s+initialized/i.test(message)) {
+      console.log('✓ HR_ACC SUCCESS');
       results['HR_ACC initialized'] = true;
     }
     
-    // Check for PSRAM
-    if (lowerMsg.includes('psram') && (lowerMsg.includes('failed') || lowerMsg.includes('error'))) {
+    // Check for PSRAM - look for the specific pattern
+    if (/psram\s+(failed|error)/i.test(message)) {
       console.log('✗ PSRAM FAILED');
       results['PSRAM initialized'] = false;
-    } else if (lowerMsg.includes('psram') && lowerMsg.includes('initialized')) {
+    } else if (/psram\s+initialized/i.test(message)) {
       console.log('✓ PSRAM SUCCESS');
       results['PSRAM initialized'] = true;
     }
