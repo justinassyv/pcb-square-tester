@@ -23,6 +23,7 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
   testResults = [],
   onClick 
 }) => {
+  console.log(`PCB${number} rendering with test results:`, testResults);
   const getStatusColor = () => {
     switch (status) {
       case 'pass':
