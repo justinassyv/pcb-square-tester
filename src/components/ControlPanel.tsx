@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, X } from 'lucide-react';
+import { CheckCircle, X, RotateCcw } from 'lucide-react';
 
 interface ControlPanelProps {
   onPass: () => void;
   onCancel: () => void;
+  onReset: () => void;
   currentPCB: number;
   disabled: { pass: boolean; cancel: boolean; }
 }
@@ -13,6 +14,7 @@ interface ControlPanelProps {
 const ControlPanel: React.FC<ControlPanelProps> = ({
   onPass,
   onCancel,
+  onReset,
   currentPCB,
   disabled
 }) => {
@@ -39,6 +41,15 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           <span className="text-lg font-medium text-red-600">Cancel</span>
         </Button>
       </div>
+      
+      <Button 
+        onClick={onReset}
+        variant="outline"
+        className="flex items-center justify-center p-4 bg-blue-50 hover:bg-blue-100 border-blue-200 w-full"
+      >
+        <RotateCcw className="mr-2 h-5 w-5 text-blue-600" />
+        <span className="text-lg font-medium text-blue-600">RESET ALL</span>
+      </Button>
     </div>
   );
 };

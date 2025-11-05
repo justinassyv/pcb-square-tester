@@ -502,6 +502,7 @@ const Index = () => {
             <ControlPanel 
               onPass={handlePass}
               onCancel={handleCancel}
+              onReset={handleReset}
               currentPCB={activePCB}
               disabled={{
                 pass: isButtonDisabled,
