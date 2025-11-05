@@ -28,7 +28,11 @@ app.get('/api/flash-progress', (req, res) => {
   
   const homeDir = os.homedir();
   const scriptPath = join(homeDir, 'Documents', 'sonora', 'jig.py');
-  const pythonProcess = spawn('python3', [scriptPath]);
+  
+  // Use -u flag to force unbuffered output from Python
+  const pythonProcess = spawn('python3', ['-u', scriptPath], {
+    env: { ...process.env, PYTHONUNBUFFERED: '1' }
+  });
   
   // Store reference to active process
   activePythonProcess = pythonProcess;
