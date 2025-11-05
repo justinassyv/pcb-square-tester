@@ -430,8 +430,7 @@ const Index = () => {
   const passCount = pcbStatuses.filter(status => status === 'pass').length;
   const failCount = pcbStatuses.filter(status => status === 'fail').length;
   
-  const isCurrentPCBUntested = pcbStatuses[activePCB - 1] === 'untested';
-  const isButtonDisabled = !isCurrentPCBUntested || allTested;
+  const isButtonDisabled = allTested;
   
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
