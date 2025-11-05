@@ -36,13 +36,9 @@ const Index = () => {
   
   useEffect(() => {
     pcbStatusesRef.current = pcbStatuses;
-    console.log('🔄 Component Rendered - Current statuses:', pcbStatuses);
   }, [pcbStatuses]);
   
   const handlePass = async () => {
-    console.log('🚀 FLASH PCB BUTTON CLICKED');
-    console.log('Starting flash process...');
-    
     // Reset to PCB 1 at start
     setActivePCB(1);
     
@@ -57,27 +53,13 @@ const Index = () => {
       const RPI_IP = '192.168.1.212'; // e.g., '192.168.1.100'
       const apiUrl = `http://${RPI_IP}:3001/api/flash-progress`;
       
-      console.log('Connecting to SSE endpoint:', apiUrl);
       const eventSource = new EventSource(apiUrl);
-      console.log('EventSource created, waiting for events...');
 
       eventSource.onmessage = (event) => {
-        console.log('📨 RAW SSE MESSAGE RECEIVED:', event.data);
-        
         const data = JSON.parse(event.data);
-        console.log('=== SSE EVENT RECEIVED ===');
-        console.log('Event data:', data);
-        console.log('Event type:', data.type);
-        console.log('PCB number:', data.pcb);
-        console.log('Current pcbStatuses state:', pcbStatusesRef.current);
-        console.log('========================');
 
-        if (data.type === 'debug') {
-          console.log('[PYTHON]:', data.message);
-        } else if (data.type === 'channel_selected') {
-          // Update active PCB based on current channel
+        if (data.type === 'channel_selected') {
           const pcbNum = parseInt(data.pcb);
-          console.log(`[FRONTEND] Switching to PCB ${pcbNum}`);
           setActivePCB(pcbNum);
           toast({
             title: `Switching to PCB ${pcbNum}`,
@@ -86,7 +68,6 @@ const Index = () => {
           });
         } else if (data.type === 'flashing') {
           const pcbNum = parseInt(data.pcb);
-          console.log(`🔥 [FRONTEND] FLASHING EVENT - Switching to PCB ${pcbNum}`);
           setActivePCB(pcbNum);
           toast({
             title: "Flashing",
@@ -95,15 +76,10 @@ const Index = () => {
           });
         } else if (data.type === 'flash_complete') {
           const pcbNum = parseInt(data.pcb);
-          console.log('✅ [FRONTEND] FLASH COMPLETE - PCB:', pcbNum);
           
-          // Mark PCB as passed
           setPcbStatuses(prevStatuses => {
-            console.log('📝 setState callback - prevStatuses:', prevStatuses);
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'pass';
-            console.log('📝 setState callback - newStatuses:', newStatuses);
-            console.log('📝 Setting PCB', pcbNum, 'to PASS');
             return newStatuses;
           });
 
@@ -120,17 +96,10 @@ const Index = () => {
           });
         } else if (data.type === 'flash_failed') {
           const pcbNum = parseInt(data.pcb);
-          console.log('=== FLASH FAILED EVENT ===');
-          console.log('PCB Number:', pcbNum);
           
-          // Mark PCB as failed
           setPcbStatuses(prevStatuses => {
-            console.log('Inside setState - prevStatuses:', prevStatuses);
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'fail';
-            console.log('Inside setState - newStatuses:', newStatuses);
-            
-            // Find next untested PCB
             setTimeout(() => {
               setActivePCB(current => {
                 for (let i = 1; i <= 6; i++) {
@@ -152,9 +121,6 @@ const Index = () => {
             variant: "destructive",
             duration: 1500,
           });
-        } else if (data.type === 'all_done') {
-          console.log('Done message received for current PCB - continuing...');
-          // Don't close - the Python script continues to next PCB
         } else if (data.type === 'complete') {
           // Process exit - this means Python script fully finished
           eventSource.close();
@@ -172,17 +138,7 @@ const Index = () => {
         }
       };
 
-      eventSource.onopen = () => {
-        console.log('=== SSE CONNECTION OPENED ===');
-        console.log('Connected to:', apiUrl);
-        console.log('============================');
-      };
-
       eventSource.onerror = (error) => {
-        console.error('=== SSE CONNECTION ERROR ===');
-        console.error('Error:', error);
-        console.error('ReadyState:', eventSource.readyState);
-        console.error('===========================');
         eventSource.close();
         toast({
           title: "Connection Error",
@@ -270,12 +226,6 @@ const Index = () => {
   
   const isCurrentPCBUntested = pcbStatuses[activePCB - 1] === 'untested';
   const isButtonDisabled = !isCurrentPCBUntested || allTested;
-  
-  console.log('=== RENDER ===');
-  console.log('pcbStatuses:', pcbStatuses);
-  console.log('activePCB:', activePCB, 'Status:', pcbStatuses[activePCB - 1]);
-  console.log('Button disabled:', isButtonDisabled, 'Reason:', !isCurrentPCBUntested ? 'Current PCB not untested' : allTested ? 'All tested' : 'None');
-  console.log('Counts - Pass:', passCount, 'Fail:', failCount, 'Untested:', 6 - passCount - failCount);
   
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
