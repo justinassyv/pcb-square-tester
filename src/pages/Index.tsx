@@ -12,8 +12,8 @@ const generateTestResults = (data: DeviceData): TestResult[] => {
   return [
     { name: 'RTC configured', passed: data.RTC.configured },
     { name: 'RTC initialized', passed: data.RTC.initialized },
-    { name: 'lowRateAccel initialized', passed: data.lowRateAccel.initialized },
-    { name: 'lowRateAccel passed self-test', passed: data.lowRateAccel.selfTestPassed },
+    { name: 'LR_ACC initialized', passed: data.lowRateAccel.initialized },
+    { name: 'LR_ACC passed self-test', passed: data.lowRateAccel.selfTestPassed },
     { name: 'hiRateAccel initialized', passed: data.hiRateAccel.initialized },
     { name: 'PSRAM initialized', passed: data.PSRAM.initialized },
     { name: 'PSRAM test passed', passed: data.PSRAM.testPassed },
