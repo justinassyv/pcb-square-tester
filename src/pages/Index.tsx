@@ -198,11 +198,8 @@ const Index = () => {
             return newStatuses;
           });
 
-          setPcbTestResults(prevResults => {
-            const newResults = [...prevResults];
-            newResults[pcbNum - 1] = generateTestResults(mockDeviceData);
-            return newResults;
-          });
+          // Test results are already updated in real-time via parseTestResults
+          // No need to overwrite with mock data
 
           toast({
             title: "Flash Complete",
