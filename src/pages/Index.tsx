@@ -124,6 +124,7 @@ const Index = () => {
         
         // Capture raw terminal output
         if (data.type === 'raw_output') {
+          console.log('📥 RAW MESSAGE RECEIVED:', data.message);
           const formatted = data.message
             .replace(/\. /g, '.\n')  // Line break after periods
             .replace(/MCU reset reasons:/g, '\n🔄 MCU reset reasons:')
