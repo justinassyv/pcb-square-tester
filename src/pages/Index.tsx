@@ -13,7 +13,7 @@ const generateTestResults = (data: DeviceData): TestResult[] => {
     { name: 'RTC configured', passed: data.RTC.configured },
     { name: 'RTC initialized', passed: data.RTC.initialized },
     { name: 'LR_ACC initialized', passed: data.lowRateAccel.initialized },
-    { name: 'hiRateAccel initialized', passed: data.hiRateAccel.initialized },
+    { name: 'HR_ACC initialized', passed: data.hiRateAccel.initialized },
     { name: 'PSRAM initialized', passed: data.PSRAM.initialized },
     { name: 'PSRAM test passed', passed: data.PSRAM.testPassed },
     { name: 'exFlash initialized', passed: data.exFlash.initialized },
@@ -30,7 +30,7 @@ const Index = () => {
       { name: 'RTC configured', passed: false },
       { name: 'RTC initialized', passed: false },
       { name: 'LR_ACC initialized', passed: false },
-      { name: 'hiRateAccel initialized', passed: false },
+      { name: 'HR_ACC initialized', passed: false },
       { name: 'PSRAM initialized', passed: false },
       { name: 'exFlash initialized', passed: false },
       { name: 'Ext NFC configured', passed: false },
@@ -40,6 +40,14 @@ const Index = () => {
   const [terminalMessages, setTerminalMessages] = useState<string[]>([]);
   const terminalEndRef = useRef<HTMLDivElement>(null);
   
+  // Use ref to track latest statuses for event handlers
+  const pcbStatusesRef = useRef(pcbStatuses);
+  // Track which PCB is currently being processed (for test result updates)
+  const currentProcessingPCBRef = useRef<number>(1);
+  
+  useEffect(() => {
+    pcbStatusesRef.current = pcbStatuses;
+  }, [pcbStatuses]);
   const parseTestResults = (message: string): Partial<Record<string, boolean>> => {
     const results: Partial<Record<string, boolean>> = {};
     
@@ -55,9 +63,9 @@ const Index = () => {
     
     // Check for HR_ACC
     if (message.includes('HR_ACC') && message.includes('failed')) {
-      results['hiRateAccel initialized'] = false;
+      results['HR_ACC initialized'] = false;
     } else if (message.includes('HR_ACC') && message.includes('initialized')) {
-      results['hiRateAccel initialized'] = true;
+      results['HR_ACC initialized'] = true;
     }
     
     // Check for PSRAM
@@ -74,12 +82,6 @@ const Index = () => {
     return results;
   };
   
-  // Use ref to track latest statuses for event handlers
-  const pcbStatusesRef = useRef(pcbStatuses);
-  
-  useEffect(() => {
-    pcbStatusesRef.current = pcbStatuses;
-  }, [pcbStatuses]);
   
   const handlePass = async () => {
     // Reset to PCB 1 at start
@@ -136,17 +138,17 @@ const Index = () => {
           setTerminalMessages(prev => [...prev, ...formatted.split('\n').filter(m => m.trim().length > 0)]);
           setTimeout(() => terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
           
-          // Parse and update test results for active PCB
+          // Parse and update test results for currently processing PCB
           const testUpdates = parseTestResults(data.message);
           if (Object.keys(testUpdates).length > 0) {
             setPcbTestResults(prevResults => {
               const newResults = [...prevResults];
-              const currentPCBIndex = activePCB - 1;
-              const updatedTests = newResults[currentPCBIndex].map(test => ({
+              const processingPCBIndex = currentProcessingPCBRef.current - 1;
+              const updatedTests = newResults[processingPCBIndex].map(test => ({
                 ...test,
                 passed: testUpdates[test.name] !== undefined ? testUpdates[test.name]! : test.passed
               }));
-              newResults[currentPCBIndex] = updatedTests;
+              newResults[processingPCBIndex] = updatedTests;
               return newResults;
             });
           }
@@ -154,6 +156,7 @@ const Index = () => {
 
         if (data.type === 'channel_selected') {
           const pcbNum = parseInt(data.pcb);
+          currentProcessingPCBRef.current = pcbNum;
           setActivePCB(pcbNum);
           toast({
             title: `Switching to PCB ${pcbNum}`,
@@ -162,6 +165,7 @@ const Index = () => {
           });
         } else if (data.type === 'flashing') {
           const pcbNum = parseInt(data.pcb);
+          currentProcessingPCBRef.current = pcbNum;
           setActivePCB(pcbNum);
           toast({
             title: "Flashing",
@@ -318,7 +322,7 @@ const Index = () => {
         { name: 'RTC configured', passed: false },
         { name: 'RTC initialized', passed: false },
         { name: 'LR_ACC initialized', passed: false },
-        { name: 'hiRateAccel initialized', passed: false },
+        { name: 'HR_ACC initialized', passed: false },
         { name: 'PSRAM initialized', passed: false },
         { name: 'exFlash initialized', passed: false },
         { name: 'Ext NFC configured', passed: false },
