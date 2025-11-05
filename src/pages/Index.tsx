@@ -62,12 +62,14 @@ const Index = () => {
       console.log('EventSource created, waiting for events...');
 
       eventSource.onmessage = (event) => {
+        console.log('📨 RAW SSE MESSAGE RECEIVED:', event.data);
+        
         const data = JSON.parse(event.data);
         console.log('=== SSE EVENT RECEIVED ===');
         console.log('Event data:', data);
         console.log('Event type:', data.type);
         console.log('PCB number:', data.pcb);
-        console.log('Current pcbStatuses:', pcbStatuses);
+        console.log('Current pcbStatuses state:', pcbStatusesRef.current);
         console.log('========================');
 
         if (data.type === 'debug') {
@@ -84,7 +86,7 @@ const Index = () => {
           });
         } else if (data.type === 'flashing') {
           const pcbNum = parseInt(data.pcb);
-          console.log(`[FRONTEND] Flashing PCB ${pcbNum}`);
+          console.log(`🔥 [FRONTEND] FLASHING EVENT - Switching to PCB ${pcbNum}`);
           setActivePCB(pcbNum);
           toast({
             title: "Flashing",
@@ -93,29 +95,15 @@ const Index = () => {
           });
         } else if (data.type === 'flash_complete') {
           const pcbNum = parseInt(data.pcb);
-          console.log('=== FLASH COMPLETE EVENT ===');
-          console.log('PCB Number:', pcbNum);
+          console.log('✅ [FRONTEND] FLASH COMPLETE - PCB:', pcbNum);
           
           // Mark PCB as passed
           setPcbStatuses(prevStatuses => {
-            console.log('Inside setState - prevStatuses:', prevStatuses);
+            console.log('📝 setState callback - prevStatuses:', prevStatuses);
             const newStatuses = [...prevStatuses];
             newStatuses[pcbNum - 1] = 'pass';
-            console.log('Inside setState - newStatuses:', newStatuses);
-            
-            // Find next untested PCB
-            setTimeout(() => {
-              setActivePCB(current => {
-                for (let i = 1; i <= 6; i++) {
-                  const checkIndex = (pcbNum - 1 + i) % 6;
-                  if (newStatuses[checkIndex] === 'untested') {
-                    return checkIndex + 1;
-                  }
-                }
-                return current;
-              });
-            }, 100);
-            
+            console.log('📝 setState callback - newStatuses:', newStatuses);
+            console.log('📝 Setting PCB', pcbNum, 'to PASS');
             return newStatuses;
           });
 
