@@ -160,22 +160,30 @@ const Index = () => {
           // Parse and update test results for currently processing PCB
           const testUpdates = parseTestResults(data.message);
           if (Object.keys(testUpdates).length > 0) {
+            console.log('🔄 APPLYING TEST UPDATES');
             console.log('Current processing PCB:', currentProcessingPCBRef.current);
+            console.log('Test updates to apply:', testUpdates);
             setPcbTestResults(prevResults => {
               const newResults = [...prevResults];
               const processingPCBIndex = currentProcessingPCBRef.current - 1;
               console.log('Updating PCB index:', processingPCBIndex);
-              console.log('Current tests for this PCB:', newResults[processingPCBIndex]);
+              console.log('Current tests BEFORE update:', newResults[processingPCBIndex]);
               const updatedTests = newResults[processingPCBIndex].map(test => {
                 const newPassed = testUpdates[test.name] !== undefined ? testUpdates[test.name]! : test.passed;
-                console.log(`Test "${test.name}": ${test.passed} -> ${newPassed}`);
+                if (test.name === 'HR_ACC initialized') {
+                  console.log(`🎯 HR_ACC Test Update:`);
+                  console.log(`   Current: ${test.passed}`);
+                  console.log(`   New: ${newPassed}`);
+                  console.log(`   From updates: ${testUpdates[test.name]}`);
+                }
                 return {
                   ...test,
                   passed: newPassed
                 };
               });
               newResults[processingPCBIndex] = updatedTests;
-              console.log('Updated tests:', updatedTests);
+              console.log('Updated tests AFTER update:', updatedTests);
+              console.log('HR_ACC final state:', updatedTests.find(t => t.name === 'HR_ACC initialized'));
               return newResults;
             });
           }
