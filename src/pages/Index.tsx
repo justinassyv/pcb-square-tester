@@ -231,8 +231,8 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">SONORA Sensor Tester</h1>
-          <p className="text-gray-600 mt-2">Test your sensor boards and track results</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">PCB Square Tester</h1>
+          <p className="text-gray-600 mt-2">Test your PCB boards and track results</p>
         </div>
         
         <Card className="p-6 bg-white shadow-md rounded-lg">

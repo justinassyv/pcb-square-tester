@@ -24,9 +24,7 @@ app.get('/api/flash-progress', (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  console.log('\n' + '='.repeat(50));
-  console.log('🔬 Starting sensor test sequence...');
-  console.log('='.repeat(50) + '\n');
+  console.log('Starting flash process with real-time updates...');
   
   const homeDir = os.homedir();
   const scriptPath = join(homeDir, 'Documents', 'sonora', 'jig.py');
@@ -43,65 +41,84 @@ app.get('/api/flash-progress', (req, res) => {
 
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
+    console.log('========================================');
+    console.log('RAW Python output:', JSON.stringify(output));
+    console.log('========================================');
+    
+    // Send all output to frontend for debugging
+    res.write(`data: ${JSON.stringify({ type: 'debug', message: output })}\n\n`);
+    res.flush?.();
+    
+    // Try to match any number in the output that might indicate PCB
+    const anyNumberMatch = output.match(/(\d+)/);
+    if (anyNumberMatch) {
+      console.log(`Found number in output: ${anyNumberMatch[1]}`);
+    }
     
     // Parse which channel is being selected (extract the channel number)
     const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
     if (channelMatch) {
       currentPCB = parseInt(channelMatch[1]);
-      console.log(`\n🔄 Processing PCB ${currentPCB}...`);
-      res.write(`data: ${JSON.stringify({ type: 'flashing', pcb: currentPCB })}\n\n`);
+      console.log(`✓✓✓ MATCHED: Starting flash for PCB ${currentPCB}`);
+      const message = JSON.stringify({ type: 'flashing', pcb: currentPCB });
+      console.log(`>>> SENDING TO FRONTEND: ${message}`);
+      res.write(`data: ${message}\n\n`);
       res.flush?.();
     }
     
     // Parse success - UART data was parsed and saved (with checkmark emoji)
     if (output.includes('✅ Parsed data saved to')) {
-      console.log(`✅ PCB ${currentPCB} - Test PASSED`);
-      res.write(`data: ${JSON.stringify({ type: 'flash_complete', pcb: currentPCB })}\n\n`);
+      console.log(`✓✓✓ MATCHED: Flash successful for PCB ${currentPCB}`);
+      const message = JSON.stringify({ type: 'flash_complete', pcb: currentPCB });
+      res.write(`data: ${message}\n\n`);
       res.flush?.();
     }
     
     // Parse failure - No UART data received
     if (output.includes('No UART data received')) {
-      console.log(`❌ PCB ${currentPCB} - FAILED (No UART data)`);
-      res.write(`data: ${JSON.stringify({ type: 'flash_failed', pcb: currentPCB })}\n\n`);
+      console.log(`✓✓✓ MATCHED: No UART data - Flash failed for PCB ${currentPCB}`);
+      const message = JSON.stringify({ type: 'flash_failed', pcb: currentPCB });
+      res.write(`data: ${message}\n\n`);
       res.flush?.();
     }
     
     // Parse failure - UART error
     if (output.includes('UART error')) {
-      console.log(`❌ PCB ${currentPCB} - FAILED (UART error)`);
-      res.write(`data: ${JSON.stringify({ type: 'flash_failed', pcb: currentPCB })}\n\n`);
+      console.log(`✓✓✓ MATCHED: UART error - Flash failed for PCB ${currentPCB}`);
+      const message = JSON.stringify({ type: 'flash_failed', pcb: currentPCB });
+      res.write(`data: ${message}\n\n`);
       res.flush?.();
     }
     
     // Parse Done message
     if (output.includes('Done')) {
-      console.log(`\n✨ All PCBs processed\n`);
-      res.write(`data: ${JSON.stringify({ type: 'all_done' })}\n\n`);
+      console.log('✓✓✓ MATCHED: Done message received for PCB', currentPCB);
+      const message = JSON.stringify({ type: 'all_done' });
+      res.write(`data: ${message}\n\n`);
       res.flush?.();
     }
   });
 
   pythonProcess.stderr.on('data', (data) => {
     const message = data.toString();
-    console.error(`⚠️  Python error: ${message}`);
+    console.error('Python error:', message);
     res.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`);
   });
 
   pythonProcess.on('close', (code) => {
-    console.log(`\n📋 Process completed (exit code: ${code})\n`);
+    console.log(`Python process exited with code ${code}`);
     res.write(`data: ${JSON.stringify({ type: 'complete', code })}\n\n`);
     res.end();
   });
 
   pythonProcess.on('error', (error) => {
-    console.error(`❌ Failed to start Python process: ${error.message}`);
+    console.error('Failed to start Python process:', error);
     res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
     res.end();
   });
 
   req.on('close', () => {
-    console.log('\n🔌 Client disconnected - terminating process\n');
+    console.log('Client disconnected, killing Python process');
     pythonProcess.kill();
     activePythonProcess = null;
   });
@@ -110,12 +127,11 @@ app.get('/api/flash-progress', (req, res) => {
 // Kill process endpoint
 app.post('/api/kill-process', (req, res) => {
   if (activePythonProcess) {
-    console.log('\n🛑 Terminating process via user request\n');
+    console.log('Killing Python process via API request');
     activePythonProcess.kill('SIGKILL'); // Force kill immediately
     activePythonProcess = null;
     res.json({ status: 'ok', message: 'Process killed' });
   } else {
-    console.log('\n⚠️  No active process to terminate\n');
     res.json({ status: 'ok', message: 'No active process' });
   }
 });
@@ -126,10 +142,6 @@ app.get('/api/health', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log('\n' + '='.repeat(50));
-  console.log('🚀 SONORA Sensor Tester - Backend Server');
-  console.log('='.repeat(50));
-  console.log(`📡 Server: http://localhost:${PORT}`);
-  console.log(`📄 Script: ~/Documents/sonora/jig.py`);
-  console.log('='.repeat(50) + '\n');
+  console.log(`Backend server running on http://localhost:${PORT}`);
+  console.log(`Script path: ~/Documents/sonora/jig.py`);
 });
