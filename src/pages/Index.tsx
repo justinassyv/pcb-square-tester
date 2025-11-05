@@ -30,7 +30,7 @@ const Index = () => {
     Array(6).fill([]).map(() => [
       { name: 'RTC configured', passed: false },
       { name: 'RTC initialized', passed: false },
-      { name: 'lowRateAccel initialized', passed: false },
+      { name: 'LR_ACC initialized', passed: false },
       { name: 'hiRateAccel initialized', passed: false },
       { name: 'PSRAM initialized', passed: false },
       { name: 'exFlash initialized', passed: false },
@@ -46,8 +46,8 @@ const Index = () => {
     
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
-    if (message.includes('LR_ACC') && message.includes('initialized') && !message.includes('failed')) results['lowRateAccel initialized'] = true;
-    if (message.includes('LR_ACC') && message.includes('failed')) results['lowRateAccel initialized'] = false;
+    if (message.includes('LR_ACC') && message.includes('initialized') && !message.includes('failed')) results['LR_ACC initialized'] = true;
+    if (message.includes('LR_ACC') && message.includes('failed')) results['LR_ACC initialized'] = false;
     if (message.includes('HR_ACC') && message.includes('initialized') && !message.includes('failed')) results['hiRateAccel initialized'] = true;
     if (message.includes('HR_ACC') && message.includes('failed')) results['hiRateAccel initialized'] = false;
     if (message.includes('PSRAM') && message.includes('initialized') && !message.includes('failed')) results['PSRAM initialized'] = true;
@@ -302,7 +302,7 @@ const Index = () => {
       Array(6).fill([]).map(() => [
         { name: 'RTC configured', passed: false },
         { name: 'RTC initialized', passed: false },
-        { name: 'lowRateAccel initialized', passed: false },
+        { name: 'LR_ACC initialized', passed: false },
         { name: 'hiRateAccel initialized', passed: false },
         { name: 'PSRAM initialized', passed: false },
         { name: 'exFlash initialized', passed: false },
