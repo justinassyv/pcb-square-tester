@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PCBSquare from '@/components/PCBSquare';
 import ControlPanel from '@/components/ControlPanel';
+import TestConfiguration, { type RequiredTests } from '@/components/TestConfiguration';
 import { toast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import type { TestResult } from '@/components/PCBSquare';
@@ -25,6 +26,16 @@ const generateTestResults = (data: DeviceData): TestResult[] => {
 const Index = () => {
   const [pcbStatuses, setPcbStatuses] = useState<PCBStatus[]>(Array(6).fill('untested'));
   const [activePCB, setActivePCB] = useState<number>(1);
+  const [requiredTests, setRequiredTests] = useState<RequiredTests>({
+    'RTC configured': true,
+    'RTC initialized': true,
+    'LR_ACC initialized': true,
+    'HR_ACC initialized': true,
+    'PSRAM initialized': true,
+    'exFlash initialized': true,
+    'Ext NFC configured': true,
+    'Ext NFC initialized': true,
+  });
   const [pcbTestResults, setPcbTestResults] = useState<TestResult[][]>(
     Array(6).fill([]).map(() => [
       { name: 'RTC configured', passed: false },
@@ -204,23 +215,38 @@ const Index = () => {
         } else if (data.type === 'flash_complete') {
           const pcbNum = parseInt(data.pcb);
           
-          // Check if all tests passed for this PCB
+          // Check if all REQUIRED tests passed for this PCB
           setPcbTestResults(currentTestResults => {
             const pcbTests = currentTestResults[pcbNum - 1];
-            const allTestsPassed = pcbTests.every(test => test.passed);
+            
+            // Only check tests that are marked as required
+            const requiredTestResults = pcbTests.filter(test => 
+              requiredTests[test.name as keyof RequiredTests]
+            );
+            
+            const allRequiredTestsPassed = requiredTestResults.every(test => test.passed);
+            const ignoredTestsCount = pcbTests.length - requiredTestResults.length;
             
             setPcbStatuses(prevStatuses => {
               const newStatuses = [...prevStatuses];
-              newStatuses[pcbNum - 1] = allTestsPassed ? 'pass' : 'fail';
+              newStatuses[pcbNum - 1] = allRequiredTestsPassed ? 'pass' : 'fail';
               return newStatuses;
             });
 
+            const descriptionParts = [
+              allRequiredTestsPassed 
+                ? `All ${requiredTestResults.length} required tests passed`
+                : `Some required tests failed`
+            ];
+            
+            if (ignoredTestsCount > 0) {
+              descriptionParts.push(`(${ignoredTestsCount} test${ignoredTestsCount > 1 ? 's' : ''} ignored)`);
+            }
+
             toast({
-              title: allTestsPassed ? "Flash Complete" : "Flash Complete - Tests Failed",
-              description: allTestsPassed 
-                ? `PCB ${pcbNum} flashed successfully - all tests passed`
-                : `PCB ${pcbNum} flashed but some tests failed`,
-              variant: allTestsPassed ? "default" : "destructive",
+              title: allRequiredTestsPassed ? "Flash Complete" : "Flash Complete - Tests Failed",
+              description: descriptionParts.join(' '),
+              variant: allRequiredTestsPassed ? "default" : "destructive",
               duration: 1500,
             });
             
@@ -390,6 +416,11 @@ const Index = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800">SONORA Sensor Tester</h1>
           <p className="text-gray-600 mt-2">Test your sensor boards and track results</p>
         </div>
+        
+        <TestConfiguration 
+          requiredTests={requiredTests}
+          onRequiredTestsChange={setRequiredTests}
+        />
         
         <Card className="p-6 bg-white shadow-md rounded-lg">
           <div className="mb-6">
