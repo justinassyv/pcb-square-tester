@@ -62,7 +62,37 @@ const Index = () => {
         
         // Capture raw terminal output
         if (data.type === 'raw_output') {
-          setTerminalMessages(prev => [...prev, data.message.trim()].filter(m => m.length > 0));
+          const formatted = data.message
+            .replace(/\. /g, '.\n')  // Line break after periods
+            .replace(/MCU reset reasons:/g, '\n🔄 MCU reset reasons:')
+            .replace(/RTC configured/g, '\n✓ RTC configured')
+            .replace(/RTC initialized/g, '✓ RTC initialized')
+            .replace(/Error,/g, '\n❌ Error:')
+            .replace(/initialized/g, 'initialized')
+            .replace(/DUID :/g, '\n📋 DUID:')
+            .replace(/MAC Address :/g, '\n📋 MAC Address:')
+            .replace(/Hw ver :/g, '\n📋 Hw ver:')
+            .replace(/Appl ver :/g, '\n📋 Appl ver:')
+            .replace(/Boot ver :/g, '\n📋 Boot ver:')
+            .replace(/SD ver :/g, '\n📋 SD ver:')
+            .replace(/Ble adv\. name :/g, '\n📋 BLE adv. name:')
+            .replace(/MCU :/g, '\n🔧 MCU:')
+            .replace(/MCU memory :/g, '\n💾 MCU memory:')
+            .replace(/Internal flash memory layout:/g, '\n\n📂 Internal flash memory layout:')
+            .replace(/MBR 0x/g, '\n  • MBR 0x')
+            .replace(/SD 0x/g, '\n  • SD 0x')
+            .replace(/APPL 0x/g, '\n  • APPL 0x')
+            .replace(/BOOT 0x/g, '\n  • BOOT 0x')
+            .replace(/BOOT2 0x/g, '\n  • BOOT2 0x')
+            .replace(/MBR_P 0x/g, '\n  • MBR_P 0x')
+            .replace(/BOOT_S 0x/g, '\n  • BOOT_S 0x')
+            .replace(/Task State/g, '\n\n📊 Task State')
+            .replace(/Wake up source:/g, '\n⏰ Wake up source:')
+            .replace(/BLE adv name/g, '\n📡 BLE adv name')
+            .replace(/BLE on/g, '\n✓ BLE on')
+            .trim();
+          
+          setTerminalMessages(prev => [...prev, ...formatted.split('\n').filter(m => m.trim().length > 0)]);
           setTimeout(() => terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         }
 
