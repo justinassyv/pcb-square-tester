@@ -204,19 +204,27 @@ const Index = () => {
         } else if (data.type === 'flash_complete') {
           const pcbNum = parseInt(data.pcb);
           
-          setPcbStatuses(prevStatuses => {
-            const newStatuses = [...prevStatuses];
-            newStatuses[pcbNum - 1] = 'pass';
-            return newStatuses;
-          });
+          // Check if all tests passed for this PCB
+          setPcbTestResults(currentTestResults => {
+            const pcbTests = currentTestResults[pcbNum - 1];
+            const allTestsPassed = pcbTests.every(test => test.passed);
+            
+            setPcbStatuses(prevStatuses => {
+              const newStatuses = [...prevStatuses];
+              newStatuses[pcbNum - 1] = allTestsPassed ? 'pass' : 'fail';
+              return newStatuses;
+            });
 
-          // Test results are already updated in real-time via parseTestResults
-          // No need to overwrite with mock data
-
-          toast({
-            title: "Flash Complete",
-            description: `PCB ${pcbNum} flashed successfully`,
-            duration: 1500,
+            toast({
+              title: allTestsPassed ? "Flash Complete" : "Flash Complete - Tests Failed",
+              description: allTestsPassed 
+                ? `PCB ${pcbNum} flashed successfully - all tests passed`
+                : `PCB ${pcbNum} flashed but some tests failed`,
+              variant: allTestsPassed ? "default" : "destructive",
+              duration: 1500,
+            });
+            
+            return currentTestResults;
           });
         } else if (data.type === 'flash_failed') {
           const pcbNum = parseInt(data.pcb);
