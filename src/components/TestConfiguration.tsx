@@ -6,8 +6,8 @@ import { Settings } from 'lucide-react';
 export type RequiredTests = {
   'RTC configured': boolean;
   'RTC initialized': boolean;
-  'LR_ACC initialized': boolean;
-  'HR_ACC initialized': boolean;
+  'LACC initialized': boolean;
+  'HACC initialized': boolean;
   'PSRAM initialized': boolean;
   'exFlash initialized': boolean;
   'Ext NFC configured': boolean;
@@ -30,8 +30,8 @@ const TestConfiguration = ({ requiredTests, onRequiredTestsChange }: TestConfigu
   const testNames: (keyof RequiredTests)[] = [
     'RTC configured',
     'RTC initialized',
-    'LR_ACC initialized',
-    'HR_ACC initialized',
+    'LACC initialized',
+    'HACC initialized',
     'PSRAM initialized',
     'exFlash initialized',
     'Ext NFC configured',

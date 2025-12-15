@@ -13,8 +13,8 @@ const generateTestResults = (data: DeviceData): TestResult[] => {
   return [
     { name: 'RTC configured', passed: data.RTC.configured },
     { name: 'RTC initialized', passed: data.RTC.initialized },
-    { name: 'LR_ACC initialized', passed: data.lowRateAccel.initialized },
-    { name: 'HR_ACC initialized', passed: data.hiRateAccel.initialized },
+    { name: 'LACC initialized', passed: data.lowRateAccel.initialized },
+    { name: 'HACC initialized', passed: data.hiRateAccel.initialized },
     { name: 'PSRAM initialized', passed: data.PSRAM.initialized },
     { name: 'PSRAM test passed', passed: data.PSRAM.testPassed },
     { name: 'exFlash initialized', passed: data.exFlash.initialized },
@@ -37,8 +37,8 @@ const Index = () => {
     return {
       'RTC configured': true,
       'RTC initialized': true,
-      'LR_ACC initialized': true,
-      'HR_ACC initialized': true,
+      'LACC initialized': true,
+      'HACC initialized': true,
       'PSRAM initialized': true,
       'exFlash initialized': true,
       'Ext NFC configured': true,
@@ -53,8 +53,8 @@ const Index = () => {
     Array(6).fill([]).map(() => [
       { name: 'RTC configured', passed: false },
       { name: 'RTC initialized', passed: false },
-      { name: 'LR_ACC initialized', passed: false },
-      { name: 'HR_ACC initialized', passed: false },
+      { name: 'LACC initialized', passed: false },
+      { name: 'HACC initialized', passed: false },
       { name: 'PSRAM initialized', passed: false },
       { name: 'exFlash initialized', passed: false },
       { name: 'Ext NFC configured', passed: false },
@@ -87,22 +87,22 @@ const Index = () => {
     if (message.includes('RTC configured')) results['RTC configured'] = true;
     if (message.includes('RTC initialized')) results['RTC initialized'] = true;
     
-    // Check for LR_ACC - look for the specific pattern
-    if (/lr_acc\s+(failed|error)/i.test(message)) {
-      console.log('✗ LR_ACC FAILED');
-      results['LR_ACC initialized'] = false;
-    } else if (/lr_acc\s+initialized/i.test(message)) {
-      console.log('✓ LR_ACC SUCCESS');
-      results['LR_ACC initialized'] = true;
+    // Check for LACC - look for the specific pattern
+    if (/lacc\s+(failed|error)/i.test(message)) {
+      console.log('✗ LACC FAILED');
+      results['LACC initialized'] = false;
+    } else if (/lacc\s+initialized/i.test(message)) {
+      console.log('✓ LACC SUCCESS');
+      results['LACC initialized'] = true;
     }
     
-    // Check for HR_ACC - look for the specific pattern
-    if (/hr_acc\s+(failed|error)/i.test(message)) {
-      console.log('✗ HR_ACC FAILED');
-      results['HR_ACC initialized'] = false;
-    } else if (/hr_acc\s+initialized/i.test(message)) {
-      console.log('✓ HR_ACC SUCCESS');
-      results['HR_ACC initialized'] = true;
+    // Check for HACC - look for the specific pattern
+    if (/hacc\s+(failed|error)/i.test(message)) {
+      console.log('✗ HACC FAILED');
+      results['HACC initialized'] = false;
+    } else if (/hacc\s+initialized/i.test(message)) {
+      console.log('✓ HACC SUCCESS');
+      results['HACC initialized'] = true;
     }
     
     // Check for PSRAM - look for the specific pattern
@@ -193,8 +193,8 @@ const Index = () => {
               console.log('Current tests BEFORE update:', newResults[processingPCBIndex]);
               const updatedTests = newResults[processingPCBIndex].map(test => {
                 const newPassed = testUpdates[test.name] !== undefined ? testUpdates[test.name]! : test.passed;
-                if (test.name === 'HR_ACC initialized') {
-                  console.log(`🎯 HR_ACC Test Update:`);
+                if (test.name === 'HACC initialized') {
+                  console.log(`🎯 HACC Test Update:`);
                   console.log(`   Current: ${test.passed}`);
                   console.log(`   New: ${newPassed}`);
                   console.log(`   From updates: ${testUpdates[test.name]}`);
@@ -206,7 +206,7 @@ const Index = () => {
               });
               newResults[processingPCBIndex] = updatedTests;
               console.log('Updated tests AFTER update:', updatedTests);
-              console.log('HR_ACC final state:', updatedTests.find(t => t.name === 'HR_ACC initialized'));
+              console.log('HACC final state:', updatedTests.find(t => t.name === 'HACC initialized'));
               return newResults;
             });
           }
@@ -405,8 +405,8 @@ const Index = () => {
       Array(6).fill([]).map(() => [
         { name: 'RTC configured', passed: false },
         { name: 'RTC initialized', passed: false },
-        { name: 'LR_ACC initialized', passed: false },
-        { name: 'HR_ACC initialized', passed: false },
+        { name: 'LACC initialized', passed: false },
+        { name: 'HACC initialized', passed: false },
         { name: 'PSRAM initialized', passed: false },
         { name: 'exFlash initialized', passed: false },
         { name: 'Ext NFC configured', passed: false },
