@@ -6,6 +6,7 @@ import { Check, X } from 'lucide-react';
 export type TestResult = {
   name: string;
   passed: boolean;
+  value?: string;
 };
 
 interface PCBSquareProps {
@@ -55,7 +56,7 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
         {testResults.map((test, index) => (
           <div key={index} className="flex items-center gap-3">
             <div className={cn(
-              "p-1 rounded-full",
+              "p-1 rounded-full flex-shrink-0",
               test.passed ? "bg-green-100" : "bg-red-100"
             )}>
               {test.passed ? (
@@ -64,7 +65,15 @@ const PCBSquare: React.FC<PCBSquareProps> = ({
                 <X className="text-red-600 h-4 w-4" />
               )}
             </div>
-            <span className="text-gray-700">{test.name}</span>
+            <span className="text-gray-700 flex-1">{test.name}</span>
+            {test.value && (
+              <span className={cn(
+                "text-xs font-mono px-1.5 py-0.5 rounded",
+                test.passed ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              )}>
+                {test.value}
+              </span>
+            )}
           </div>
         ))}
       </div>

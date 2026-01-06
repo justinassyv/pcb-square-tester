@@ -81,46 +81,46 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem('requiredTests', JSON.stringify(requiredTests));
   }, [requiredTests]);
-  const parseTestResults = (message: string): Partial<Record<string, boolean>> => {
-    const results: Partial<Record<string, boolean>> = {};
+  const parseTestResults = (message: string): Partial<Record<string, { passed: boolean; value?: string }>> => {
+    const results: Partial<Record<string, { passed: boolean; value?: string }>> = {};
     const lowerMsg = message.toLowerCase();
     
     console.log('=== PARSING MESSAGE ===');
     console.log('Original:', message);
     
-    if (message.includes('RTC configured')) results['RTC configured'] = true;
-    if (message.includes('RTC initialized')) results['RTC initialized'] = true;
+    if (message.includes('RTC configured')) results['RTC configured'] = { passed: true };
+    if (message.includes('RTC initialized')) results['RTC initialized'] = { passed: true };
     
     // Check for LACC - look for the specific pattern
     if (/lacc\s+(failed|error)/i.test(message)) {
       console.log('✗ LACC FAILED');
-      results['LACC initialized'] = false;
+      results['LACC initialized'] = { passed: false };
     } else if (/lacc\s+initialized/i.test(message)) {
       console.log('✓ LACC SUCCESS');
-      results['LACC initialized'] = true;
+      results['LACC initialized'] = { passed: true };
     }
     
     // Check for HACC - look for the specific pattern
     if (/hacc\s+(failed|error)/i.test(message)) {
       console.log('✗ HACC FAILED');
-      results['HACC initialized'] = false;
+      results['HACC initialized'] = { passed: false };
     } else if (/hacc\s+initialized/i.test(message)) {
       console.log('✓ HACC SUCCESS');
-      results['HACC initialized'] = true;
+      results['HACC initialized'] = { passed: true };
     }
     
     // Check for PSRAM - look for the specific pattern
     if (/psram\s+(failed|error)/i.test(message)) {
       console.log('✗ PSRAM FAILED');
-      results['PSRAM initialized'] = false;
+      results['PSRAM initialized'] = { passed: false };
     } else if (/psram\s+initialized/i.test(message)) {
       console.log('✓ PSRAM SUCCESS');
-      results['PSRAM initialized'] = true;
+      results['PSRAM initialized'] = { passed: true };
     }
     
-    if (message.includes('exFlash initialized')) results['exFlash initialized'] = true;
-    if (message.includes('Ext NFC configured')) results['Ext NFC configured'] = true;
-    if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = true;
+    if (message.includes('exFlash initialized')) results['exFlash initialized'] = { passed: true };
+    if (message.includes('Ext NFC configured')) results['Ext NFC configured'] = { passed: true };
+    if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = { passed: true };
     
     // Check for VSC_V voltage (pass if between 3.2V and 3.4V)
     const vscMatch = message.match(/VSC_V:\s*([\d.]+)/i);
@@ -128,7 +128,7 @@ const Index = () => {
       const voltage = parseFloat(vscMatch[1]);
       const passed = voltage >= 3.2 && voltage <= 3.4;
       console.log(`VSC_V: ${voltage}V - ${passed ? '✓ PASS' : '✗ FAIL'} (range: 3.2-3.4V)`);
-      results['VSC_V'] = passed;
+      results['VSC_V'] = { passed, value: `${voltage}V` };
     }
     
     // Check for VMC_V voltage (pass if between 3.2V and 3.4V)
@@ -137,7 +137,7 @@ const Index = () => {
       const voltage = parseFloat(vmcMatch[1]);
       const passed = voltage >= 3.2 && voltage <= 3.4;
       console.log(`VMC_V: ${voltage}V - ${passed ? '✓ PASS' : '✗ FAIL'} (range: 3.2-3.4V)`);
-      results['VMC_V'] = passed;
+      results['VMC_V'] = { passed, value: `${voltage}V` };
     }
     
     console.log('Parsed results:', results);
@@ -214,17 +214,20 @@ const Index = () => {
               console.log('Updating PCB index:', processingPCBIndex);
               console.log('Current tests BEFORE update:', newResults[processingPCBIndex]);
               const updatedTests = newResults[processingPCBIndex].map(test => {
-                const newPassed = testUpdates[test.name] !== undefined ? testUpdates[test.name]! : test.passed;
-                if (test.name === 'HACC initialized') {
-                  console.log(`🎯 HACC Test Update:`);
-                  console.log(`   Current: ${test.passed}`);
-                  console.log(`   New: ${newPassed}`);
-                  console.log(`   From updates: ${testUpdates[test.name]}`);
+                const update = testUpdates[test.name];
+                if (update !== undefined) {
+                  if (test.name === 'HACC initialized') {
+                    console.log(`🎯 HACC Test Update:`);
+                    console.log(`   Current: ${test.passed}`);
+                    console.log(`   New: ${update.passed}`);
+                  }
+                  return {
+                    ...test,
+                    passed: update.passed,
+                    value: update.value || test.value
+                  };
                 }
-                return {
-                  ...test,
-                  passed: newPassed
-                };
+                return test;
               });
               newResults[processingPCBIndex] = updatedTests;
               console.log('Updated tests AFTER update:', updatedTests);
