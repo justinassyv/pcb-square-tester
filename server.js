@@ -98,14 +98,15 @@ app.get('/api/flash-progress', (req, res) => {
     const message = data.toString();
     console.error(`⚠️  Python error: ${message}`);
     
-    // Check for J-Link connection errors in stderr
+    // Check for J-Link connection errors in stderr - mark PCB as failed but don't close connection
     if (currentPCB > 0 && (message.includes('error -102') || message.includes('connect_to_emu') || message.includes('Unable to connect to a debugger'))) {
       console.log(`❌ PCB ${currentPCB} - FAILED (J-Link connection error from stderr)`);
       res.write(`data: ${JSON.stringify({ type: 'flash_failed', pcb: currentPCB, error: 'jlink_connection' })}\n\n`);
       res.flush?.();
-    } else {
-      res.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`);
     }
+    // Send as warning (non-fatal) instead of error to prevent frontend from closing connection
+    res.write(`data: ${JSON.stringify({ type: 'warning', message })}\n\n`);
+    res.flush?.();
   });
 
   pythonProcess.on('close', (code) => {
