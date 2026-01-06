@@ -78,9 +78,9 @@ app.get('/api/flash-progress', (req, res) => {
       res.flush?.();
     }
     
-    // Parse failure - J-Link connection error (error -102, etc.)
+    // Parse failure - J-Link connection error (error -102, etc.) - only if we're processing a specific PCB
     const jlinkErrorMatch = output.match(/error\s*(-?\d+):/i);
-    if (jlinkErrorMatch || output.includes('command connect_to_emu') || output.includes('connect_to_emu_with_snr')) {
+    if (currentPCB > 0 && (jlinkErrorMatch || output.includes('command connect_to_emu') || output.includes('connect_to_emu_with_snr'))) {
       console.log(`❌ PCB ${currentPCB} - FAILED (J-Link connection error)`);
       res.write(`data: ${JSON.stringify({ type: 'flash_failed', pcb: currentPCB, error: 'jlink_connection' })}\n\n`);
       res.flush?.();
