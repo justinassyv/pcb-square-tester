@@ -302,6 +302,7 @@ const Index = () => {
           });
         } else if (data.type === 'flash_failed') {
           const pcbNum = parseInt(data.pcb);
+          const errorType = data.error;
           
           setPcbStatuses(prevStatuses => {
             const newStatuses = [...prevStatuses];
@@ -321,11 +322,15 @@ const Index = () => {
             return newStatuses;
           });
           
+          const errorMessage = errorType === 'jlink_connection' 
+            ? `PCB ${pcbNum} - J-Link connection error (check probe connection)`
+            : `PCB ${pcbNum} failed to flash`;
+          
           toast({
             title: "Flash Failed",
-            description: `PCB ${pcbNum} failed to flash`,
+            description: errorMessage,
             variant: "destructive",
-            duration: 1500,
+            duration: 3000,
           });
         } else if (data.type === 'complete') {
           // Process exit - this means Python script fully finished
