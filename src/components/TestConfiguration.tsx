@@ -12,6 +12,8 @@ export type RequiredTests = {
   'exFlash initialized': boolean;
   'Ext NFC configured': boolean;
   'Ext NFC initialized': boolean;
+  'VSC_V': boolean;
+  'VMC_V': boolean;
 };
 
 interface TestConfigurationProps {
@@ -36,6 +38,8 @@ const TestConfiguration = ({ requiredTests, onRequiredTestsChange }: TestConfigu
     'exFlash initialized',
     'Ext NFC configured',
     'Ext NFC initialized',
+    'VSC_V',
+    'VMC_V',
   ];
 
   return (
