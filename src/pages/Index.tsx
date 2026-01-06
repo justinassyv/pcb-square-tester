@@ -43,6 +43,8 @@ const Index = () => {
       'exFlash initialized': true,
       'Ext NFC configured': true,
       'Ext NFC initialized': true,
+      'VSC_V': true,
+      'VMC_V': true,
     };
   };
 
@@ -59,6 +61,8 @@ const Index = () => {
       { name: 'exFlash initialized', passed: false },
       { name: 'Ext NFC configured', passed: false },
       { name: 'Ext NFC initialized', passed: false },
+      { name: 'VSC_V', passed: false },
+      { name: 'VMC_V', passed: false },
     ])
   );
   const [terminalMessages, setTerminalMessages] = useState<string[]>([]);
@@ -117,6 +121,24 @@ const Index = () => {
     if (message.includes('exFlash initialized')) results['exFlash initialized'] = true;
     if (message.includes('Ext NFC configured')) results['Ext NFC configured'] = true;
     if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = true;
+    
+    // Check for VSC_V voltage (pass if between 3.2V and 3.4V)
+    const vscMatch = message.match(/VSC_V:\s*([\d.]+)/i);
+    if (vscMatch) {
+      const voltage = parseFloat(vscMatch[1]);
+      const passed = voltage >= 3.2 && voltage <= 3.4;
+      console.log(`VSC_V: ${voltage}V - ${passed ? '✓ PASS' : '✗ FAIL'} (range: 3.2-3.4V)`);
+      results['VSC_V'] = passed;
+    }
+    
+    // Check for VMC_V voltage (pass if between 3.2V and 3.4V)
+    const vmcMatch = message.match(/VMC_V:\s*([\d.]+)/i);
+    if (vmcMatch) {
+      const voltage = parseFloat(vmcMatch[1]);
+      const passed = voltage >= 3.2 && voltage <= 3.4;
+      console.log(`VMC_V: ${voltage}V - ${passed ? '✓ PASS' : '✗ FAIL'} (range: 3.2-3.4V)`);
+      results['VMC_V'] = passed;
+    }
     
     console.log('Parsed results:', results);
     console.log('======================');
@@ -411,6 +433,8 @@ const Index = () => {
         { name: 'exFlash initialized', passed: false },
         { name: 'Ext NFC configured', passed: false },
         { name: 'Ext NFC initialized', passed: false },
+        { name: 'VSC_V', passed: false },
+        { name: 'VMC_V', passed: false },
       ])
     );
     
