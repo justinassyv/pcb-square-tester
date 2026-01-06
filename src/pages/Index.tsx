@@ -123,7 +123,8 @@ const Index = () => {
     if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = { passed: true };
     
     // Check for VSC_V voltage (pass if between 3.2V and 3.4V)
-    const vscMatch = message.match(/VSC_V:\s*([\d.]+)/i);
+    // Match patterns like "VSC: 3.291" or "VSC_V: 3.291"
+    const vscMatch = message.match(/VSC(?:_V)?:\s*([\d.]+)/i);
     if (vscMatch) {
       const voltage = parseFloat(vscMatch[1]);
       const passed = voltage >= 3.2 && voltage <= 3.4;
@@ -132,7 +133,8 @@ const Index = () => {
     }
     
     // Check for VMC_V voltage (pass if between 3.2V and 3.4V)
-    const vmcMatch = message.match(/VMC_V:\s*([\d.]+)/i);
+    // Match patterns like "VMC: 3.298" or "VMC_V: 3.298"
+    const vmcMatch = message.match(/VMC(?:_V)?:\s*([\d.]+)/i);
     if (vmcMatch) {
       const voltage = parseFloat(vmcMatch[1]);
       const passed = voltage >= 3.2 && voltage <= 3.4;
