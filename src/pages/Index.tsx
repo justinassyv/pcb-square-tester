@@ -221,10 +221,13 @@ const Index = () => {
                     console.log(`   Current: ${test.passed}`);
                     console.log(`   New: ${update.passed}`);
                   }
+                  if (test.name === 'VSC_V' || test.name === 'VMC_V') {
+                    console.log(`🔋 ${test.name} Update: ${update.value} - ${update.passed ? 'PASS' : 'FAIL'}`);
+                  }
                   return {
                     ...test,
                     passed: update.passed,
-                    value: update.value || test.value
+                    value: update.value !== undefined ? update.value : test.value
                   };
                 }
                 return test;
