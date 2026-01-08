@@ -32,7 +32,10 @@ app.get('/api/flash-progress', (req, res) => {
   const scriptPath = join(homeDir, 'Documents', 'sonora', 'jig.py');
   
   // Use -u flag to force unbuffered output from Python
+  // Set cwd to save test reports in the test_reports directory
+  const reportsDir = '/home/rpi/Documents/ui/pcb-square-tester/test_reports';
   const pythonProcess = spawn('python3', ['-u', scriptPath], {
+    cwd: reportsDir,
     env: { ...process.env, PYTHONUNBUFFERED: '1' }
   });
   
