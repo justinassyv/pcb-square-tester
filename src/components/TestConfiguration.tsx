@@ -4,7 +4,6 @@ import { Label } from '@/components/ui/label';
 import { Settings } from 'lucide-react';
 
 export type RequiredTests = {
-  'RTC configured': boolean;
   'RTC initialized': boolean;
   'LACC initialized': boolean;
   'HACC initialized': boolean;
@@ -30,7 +29,6 @@ const TestConfiguration = ({ requiredTests, onRequiredTestsChange }: TestConfigu
   };
 
   const testNames: (keyof RequiredTests)[] = [
-    'RTC configured',
     'RTC initialized',
     'LACC initialized',
     'HACC initialized',

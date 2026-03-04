@@ -11,7 +11,6 @@ type PCBStatus = 'untested' | 'pass' | 'fail';
 
 const generateTestResults = (data: DeviceData): TestResult[] => {
   return [
-    { name: 'RTC configured', passed: data.RTC.configured },
     { name: 'RTC initialized', passed: data.RTC.initialized },
     { name: 'LACC initialized', passed: data.lowRateAccel.initialized },
     { name: 'HACC initialized', passed: data.hiRateAccel.initialized },
@@ -35,7 +34,6 @@ const Index = () => {
       }
     }
     return {
-      'RTC configured': true,
       'RTC initialized': true,
       'LACC initialized': true,
       'HACC initialized': true,
@@ -53,7 +51,6 @@ const Index = () => {
   const [requiredTests, setRequiredTests] = useState<RequiredTests>(loadRequiredTests());
   const [pcbTestResults, setPcbTestResults] = useState<TestResult[][]>(
     Array(6).fill([]).map(() => [
-      { name: 'RTC configured', passed: false },
       { name: 'RTC initialized', passed: false },
       { name: 'LACC initialized', passed: false },
       { name: 'HACC initialized', passed: false },
@@ -88,7 +85,6 @@ const Index = () => {
     console.log('=== PARSING MESSAGE ===');
     console.log('Original:', message);
     
-    if (message.includes('RTC configured')) results['RTC configured'] = { passed: true };
     if (message.includes('RTC initialized')) results['RTC initialized'] = { passed: true };
     
     // Check for LACC - look for the specific pattern
@@ -174,7 +170,6 @@ const Index = () => {
           const formatted = data.message
             .replace(/\. /g, '.\n')  // Line break after periods
             .replace(/MCU reset reasons:/g, '\n🔄 MCU reset reasons:')
-            .replace(/RTC configured/g, '\n✓ RTC configured')
             .replace(/RTC initialized/g, '✓ RTC initialized')
             .replace(/Error,/g, '\n❌ Error:')
             .replace(/initialized/g, 'initialized')
@@ -438,7 +433,6 @@ const Index = () => {
     setTerminalMessages([]);
     setPcbTestResults(
       Array(6).fill([]).map(() => [
-        { name: 'RTC configured', passed: false },
         { name: 'RTC initialized', passed: false },
         { name: 'LACC initialized', passed: false },
         { name: 'HACC initialized', passed: false },
