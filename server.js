@@ -43,65 +43,94 @@ app.get('/api/flash-progress', (req, res) => {
   activePythonProcess = pythonProcess;
 
   let currentPCB = 0; // Track current PCB being processed (will increment to 1 on first device)
+  let stdoutCarry = '';
+  const exFlashDetectedPCBs = new Set();
+
+  const normalizeStreamText = (text) =>
+    text
+      .replace(/\x1B\[[0-9;]*[A-Za-z]/g, ' ')
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
-    
+
     // Send all raw output to frontend
     res.write(`data: ${JSON.stringify({ type: 'raw_output', message: output })}\n\n`);
     res.flush?.();
-    
-    // Parse which channel is being selected (extract the channel number)
-    const channelMatch = output.match(/===\s*Selecting\s+channel\s+(\d+)\s*===/i);
-    if (channelMatch) {
-      currentPCB = parseInt(channelMatch[1], 10);
+
+    const combined = `${stdoutCarry}${output}`;
+    const normalizedCombined = normalizeStreamText(combined);
+
+    // Parse channel robustly even when the marker line is split across stdout chunks
+    const channelRegex = /===\s*Selecting\s+channel\s+(\d+)\s*===/gi;
+    let match;
+    let latestChannel = null;
+    while ((match = channelRegex.exec(normalizedCombined)) !== null) {
+      latestChannel = parseInt(match[1], 10);
+    }
+
+    const previousPCB = currentPCB;
+    if (latestChannel && !Number.isNaN(latestChannel) && latestChannel !== currentPCB) {
+      currentPCB = latestChannel;
       console.log(`\n🔄 Processing PCB ${currentPCB}...`);
       res.write(`data: ${JSON.stringify({ type: 'flashing', pcb: currentPCB })}\n\n`);
       res.flush?.();
     }
 
+    // If channel just changed, don't let previous channel carry-over trigger exFlash on the new PCB
+    const parseScope = currentPCB !== previousPCB ? output : combined;
+    const normalizedScope = normalizeStreamText(parseScope);
+
     // Explicit exFlash detection from backend stream (often appears before reset/UART read)
-    const exFlashDetected = /ex\s*flash[^\n\r]{0,100}initialized/i.test(output) || /ex\s*flash[^\n\r]{0,120}size\s*\d+\s*kb/i.test(output);
-    if (currentPCB > 0 && exFlashDetected) {
+    const exFlashDetected = /ex\s*flash[^a-zA-Z0-9]{0,12}initialized/i.test(normalizedScope)
+      || /ex\s*flash[^\n\r]{0,160}size\s*\d+\s*kb/i.test(normalizedScope)
+      || /exflash[^\n\r]{0,40}initialized/i.test(normalizedScope);
+    if (currentPCB > 0 && exFlashDetected && !exFlashDetectedPCBs.has(currentPCB)) {
+      exFlashDetectedPCBs.add(currentPCB);
       res.write(`data: ${JSON.stringify({ type: 'exflash_detected', pcb: currentPCB })}\n\n`);
       res.flush?.();
     }
-    
-    // Parse success - UART data was parsed and saved (with checkmark emoji)
-    if (output.includes('✅ Parsed data saved to')) {
+
+    // Parse success - UART data was parsed and saved
+    if (/Parsed data saved to/i.test(normalizedScope)) {
       console.log(`✅ PCB ${currentPCB} - Test PASSED`);
       res.write(`data: ${JSON.stringify({ type: 'flash_complete', pcb: currentPCB })}\n\n`);
       res.flush?.();
     }
-    
+
     // Parse failure - No UART data received
-    if (output.includes('No UART data received')) {
+    if (/No UART data received/i.test(normalizedScope)) {
       console.log(`❌ PCB ${currentPCB} - FAILED (No UART data)`);
       res.write(`data: ${JSON.stringify({ type: 'flash_failed', pcb: currentPCB })}\n\n`);
       res.flush?.();
     }
-    
+
     // Parse failure - UART error
-    if (output.includes('UART error')) {
+    if (/UART error/i.test(normalizedScope)) {
       console.log(`❌ PCB ${currentPCB} - FAILED (UART error)`);
       res.write(`data: ${JSON.stringify({ type: 'flash_failed', pcb: currentPCB })}\n\n`);
       res.flush?.();
     }
-    
+
     // Parse failure - J-Link connection error (error -102, etc.) - only if we're processing a specific PCB
-    const jlinkErrorMatch = output.match(/error\s*(-?\d+):/i);
-    if (currentPCB > 0 && (jlinkErrorMatch || output.includes('command connect_to_emu') || output.includes('connect_to_emu_with_snr'))) {
+    const jlinkErrorMatch = /error\s*(-?\d+):/i.test(normalizedScope);
+    if (currentPCB > 0 && (jlinkErrorMatch || /command connect_to_emu|connect_to_emu_with_snr/i.test(normalizedScope))) {
       console.log(`❌ PCB ${currentPCB} - FAILED (J-Link connection error)`);
       res.write(`data: ${JSON.stringify({ type: 'flash_failed', pcb: currentPCB, error: 'jlink_connection' })}\n\n`);
       res.flush?.();
     }
-    
+
     // Parse Done message
-    if (output.includes('Done')) {
+    if (/\bDone\b/i.test(normalizedScope)) {
       console.log(`\n✨ All PCBs processed\n`);
       res.write(`data: ${JSON.stringify({ type: 'all_done' })}\n\n`);
       res.flush?.();
     }
+
+    // Keep a short tail to bridge split tokens only
+    stdoutCarry = parseScope.slice(-240);
   });
 
   pythonProcess.stderr.on('data', (data) => {
