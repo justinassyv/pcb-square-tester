@@ -114,9 +114,9 @@ const Index = () => {
       results['PSRAM initialized'] = { passed: true };
     }
     
-    if (message.includes('exFlash initialized')) results['exFlash initialized'] = { passed: true };
-    if (message.includes('Ext NFC configured')) results['Ext NFC configured'] = { passed: true };
-    if (message.includes('Ext NFC initialized')) results['Ext NFC initialized'] = { passed: true };
+    if (/exFlash\s+initialized/i.test(message)) results['exFlash initialized'] = { passed: true };
+    if (/Ext\s+NFC\s+configur/i.test(message)) results['Ext NFC configured'] = { passed: true };
+    if (/Ext\s+NFC\s+initialized/i.test(message)) results['Ext NFC initialized'] = { passed: true };
     
     // Check for VSC_V voltage (pass if between 3.2V and 3.4V)
     // Match patterns like "VSC: 3.291" or "VSC_V: 3.291"
