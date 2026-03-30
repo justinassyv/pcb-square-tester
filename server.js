@@ -45,8 +45,15 @@ app.get('/api/flash-progress', (req, res) => {
 
   let currentPCB = 0; // Track current PCB being processed (will increment to 1 on first device)
   let stdoutCarry = '';
+  let pendingExFlashDetections = 0;
   const exFlashDetectedPCBs = new Set();
   const flashCompletedPCBs = new Set();
+
+  const exFlashPatterns = [
+    /(?:^|\b)(?:ex|ext|external)\s*flash[^a-zA-Z0-9]{0,20}(?:initialized|init(?:ialized)?|ready|detected)\b/i,
+    /(?:^|\b)(?:ex|ext|external)\s*flash[^\n\r]{0,160}(?:size|capacity)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:kb|mb)\b/i,
+    /\bextflash\b[^\n\r]{0,80}(?:initialized|size|capacity)\b/i,
+  ];
 
   const normalizeStreamText = (text) =>
     text
@@ -62,6 +69,8 @@ app.get('/api/flash-progress', (req, res) => {
     res.write(`data: ${JSON.stringify({ type: 'flash_complete', pcb })}\n\n`);
     res.flush?.();
   };
+
+  const hasExFlashSignal = (text) => exFlashPatterns.some((pattern) => pattern.test(text));
 
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
@@ -87,6 +96,13 @@ app.get('/api/flash-progress', (req, res) => {
       console.log(`\n🔄 Processing PCB ${currentPCB}...`);
       res.write(`data: ${JSON.stringify({ type: 'flashing', pcb: currentPCB })}\n\n`);
       res.flush?.();
+
+      if (pendingExFlashDetections > 0 && !exFlashDetectedPCBs.has(currentPCB)) {
+        pendingExFlashDetections -= 1;
+        exFlashDetectedPCBs.add(currentPCB);
+        res.write(`data: ${JSON.stringify({ type: 'exflash_detected', pcb: currentPCB })}\n\n`);
+        res.flush?.();
+      }
     }
 
     // If channel just changed, don't let previous channel carry-over trigger exFlash on the new PCB
@@ -94,13 +110,15 @@ app.get('/api/flash-progress', (req, res) => {
     const normalizedScope = normalizeStreamText(parseScope);
 
     // Explicit exFlash detection from backend stream (often appears before reset/UART read)
-    const exFlashDetected = /ex\s*flash[^a-zA-Z0-9]{0,12}initialized/i.test(normalizedScope)
-      || /ex\s*flash[^\n\r]{0,160}size\s*\d+\s*kb/i.test(normalizedScope)
-      || /exflash[^\n\r]{0,40}initialized/i.test(normalizedScope);
-    if (currentPCB > 0 && exFlashDetected && !exFlashDetectedPCBs.has(currentPCB)) {
-      exFlashDetectedPCBs.add(currentPCB);
-      res.write(`data: ${JSON.stringify({ type: 'exflash_detected', pcb: currentPCB })}\n\n`);
-      res.flush?.();
+    const exFlashDetected = hasExFlashSignal(normalizedScope);
+    if (exFlashDetected) {
+      if (currentPCB > 0 && !exFlashDetectedPCBs.has(currentPCB)) {
+        exFlashDetectedPCBs.add(currentPCB);
+        res.write(`data: ${JSON.stringify({ type: 'exflash_detected', pcb: currentPCB })}\n\n`);
+        res.flush?.();
+      } else if (currentPCB <= 0) {
+        pendingExFlashDetections = Math.min(pendingExFlashDetections + 1, 6);
+      }
     }
 
     // Parse success - UART data was parsed and saved

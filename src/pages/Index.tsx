@@ -122,7 +122,11 @@ const Index = () => {
       results['PSRAM initialized'] = { passed: true };
     }
 
-    if (/ex\s*flash[^a-zA-Z0-9]{0,8}initialized/i.test(normalizedMessage) || /ex\s*flash[^\n\r]{0,80}size\s*\d+\s*kb/i.test(normalizedMessage)) {
+    if (
+      /(?:^|\b)(?:ex|ext|external)\s*flash[^a-zA-Z0-9]{0,20}(?:initialized|init(?:ialized)?|ready|detected)\b/i.test(normalizedMessage)
+      || /(?:^|\b)(?:ex|ext|external)\s*flash[^\n\r]{0,120}(?:size|capacity)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:kb|mb)\b/i.test(normalizedMessage)
+      || /\bextflash\b[^\n\r]{0,80}(?:initialized|size|capacity)\b/i.test(normalizedMessage)
+    ) {
       results['exFlash initialized'] = { passed: true };
     }
     if (/Ext\s+NFC\s+configur/i.test(normalizedMessage)) results['Ext NFC configured'] = { passed: true };
