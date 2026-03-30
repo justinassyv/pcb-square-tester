@@ -126,6 +126,8 @@ const Index = () => {
       /(?:^|\b)(?:ex|ext|external)\s*flash[^a-zA-Z0-9]{0,20}(?:initialized|init(?:ialized)?|ready|detected)\b/i.test(normalizedMessage)
       || /(?:^|\b)(?:ex|ext|external)\s*flash[^\n\r]{0,120}(?:size|capacity)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:kb|mb)\b/i.test(normalizedMessage)
       || /\bextflash\b[^\n\r]{0,80}(?:initialized|size|capacity)\b/i.test(normalizedMessage)
+      || /(?:^|\b)(?:ex|ext|external)\s*flash\s*[:=-][^\n\r]{0,80}\b\d+(?:\.\d+)?\s*(?:kb|mb)\b/i.test(normalizedMessage)
+      || /\b(?:ex|ext|external)flash[_\s-]*initialized\s*[:=]\s*(?:true|1|yes|ok|pass(?:ed)?)\b/i.test(normalizedMessage)
     ) {
       results['exFlash initialized'] = { passed: true };
     }

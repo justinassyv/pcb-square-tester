@@ -53,6 +53,8 @@ app.get('/api/flash-progress', (req, res) => {
     /(?:^|\b)(?:ex|ext|external)\s*flash[^a-zA-Z0-9]{0,20}(?:initialized|init(?:ialized)?|ready|detected)\b/i,
     /(?:^|\b)(?:ex|ext|external)\s*flash[^\n\r]{0,160}(?:size|capacity)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:kb|mb)\b/i,
     /\bextflash\b[^\n\r]{0,80}(?:initialized|size|capacity)\b/i,
+    /(?:^|\b)(?:ex|ext|external)\s*flash\s*[:=-][^\n\r]{0,80}\b\d+(?:\.\d+)?\s*(?:kb|mb)\b/i,
+    /\b(?:ex|ext|external)flash[_\s-]*initialized\s*[:=]\s*(?:true|1|yes|ok|pass(?:ed)?)\b/i,
   ];
 
   const normalizeStreamText = (text) =>
@@ -132,8 +134,9 @@ app.get('/api/flash-progress', (req, res) => {
         const reportPath = join(reportsDir, reportFile);
         fs.readFile(reportPath, 'utf8')
           .then((content) => {
-            const exFlashInitialized = /^exFlash_initialized:\s*true\s*$/im.test(content)
-              || /^exFlash_size_kb:\s*\d+\s*$/im.test(content);
+            const exFlashInitialized = /^(?:ex|ext|external)flash[_\s-]*initialized\s*:\s*(?:true|1|yes|ok|pass(?:ed)?)\s*$/im.test(content)
+              || /^(?:ex|ext|external)flash[_\s-]*(?:size|capacity)_(?:kb|mb)\s*:\s*\d+(?:\.\d+)?\s*$/im.test(content)
+              || /^(?:ex|ext|external)flash[_\s-]*(?:size|capacity)\s*:\s*\d+(?:\.\d+)?\s*(?:kb|mb)\s*$/im.test(content);
 
             res.write(`data: ${JSON.stringify({
               type: 'parsed_report',
@@ -187,6 +190,17 @@ app.get('/api/flash-progress', (req, res) => {
   pythonProcess.stderr.on('data', (data) => {
     const message = data.toString();
     console.error(`⚠️  Python error: ${message}`);
+
+    const normalizedError = normalizeStreamText(message);
+    if (hasExFlashSignal(normalizedError)) {
+      if (currentPCB > 0 && !exFlashDetectedPCBs.has(currentPCB)) {
+        exFlashDetectedPCBs.add(currentPCB);
+        res.write(`data: ${JSON.stringify({ type: 'exflash_detected', pcb: currentPCB })}\n\n`);
+        res.flush?.();
+      } else if (currentPCB <= 0) {
+        pendingExFlashDetections = Math.min(pendingExFlashDetections + 1, 6);
+      }
+    }
     
     // Check for J-Link connection errors in stderr - mark PCB as failed but don't close connection
     if (currentPCB > 0 && (message.includes('error -102') || message.includes('connect_to_emu') || message.includes('Unable to connect to a debugger'))) {
