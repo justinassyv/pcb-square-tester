@@ -69,6 +69,8 @@ const Index = () => {
   const pcbStatusesRef = useRef(pcbStatuses);
   // Track which PCB is currently being processed (for test result updates)
   const currentProcessingPCBRef = useRef<number>(1);
+  // Keep a rolling parse buffer so split UART chunks are still detectable
+  const parserCarryRef = useRef<string>('');
   
   useEffect(() => {
     pcbStatusesRef.current = pcbStatuses;
@@ -78,15 +80,15 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem('requiredTests', JSON.stringify(requiredTests));
   }, [requiredTests]);
+
   const parseTestResults = (message: string): Partial<Record<string, { passed: boolean; value?: string }>> => {
     const results: Partial<Record<string, { passed: boolean; value?: string }>> = {};
-    const lowerMsg = message.toLowerCase();
-    
+
     console.log('=== PARSING MESSAGE ===');
     console.log('Original:', message);
-    
+
     if (message.includes('RTC initialized')) results['RTC initialized'] = { passed: true };
-    
+
     // Check for LACC - look for the specific pattern
     if (/lacc\s+(failed|error)/i.test(message)) {
       console.log('✗ LACC FAILED');
@@ -95,7 +97,7 @@ const Index = () => {
       console.log('✓ LACC SUCCESS');
       results['LACC initialized'] = { passed: true };
     }
-    
+
     // Check for HACC - look for the specific pattern
     if (/hacc\s+(failed|error)/i.test(message)) {
       console.log('✗ HACC FAILED');
@@ -104,7 +106,7 @@ const Index = () => {
       console.log('✓ HACC SUCCESS');
       results['HACC initialized'] = { passed: true };
     }
-    
+
     // Check for PSRAM - look for the specific pattern
     if (/psram\s+(failed|error)/i.test(message)) {
       console.log('✗ PSRAM FAILED');
@@ -113,11 +115,11 @@ const Index = () => {
       console.log('✓ PSRAM SUCCESS');
       results['PSRAM initialized'] = { passed: true };
     }
-    
-    if (/exFlash\s+initialized/i.test(message)) results['exFlash initialized'] = { passed: true };
+
+    if (/ex\s*flash\s+initialized/i.test(message)) results['exFlash initialized'] = { passed: true };
     if (/Ext\s+NFC\s+configur/i.test(message)) results['Ext NFC configured'] = { passed: true };
     if (/Ext\s+NFC\s+initialized/i.test(message)) results['Ext NFC initialized'] = { passed: true };
-    
+
     // Check for VSC_V voltage (pass if between 3.2V and 3.4V)
     // Match patterns like "VSC: 3.291" or "VSC_V: 3.291"
     const vscMatch = message.match(/VSC(?:_V)?:\s*([\d.]+)/i);
@@ -127,7 +129,7 @@ const Index = () => {
       console.log(`VSC_V: ${voltage}V - ${passed ? '✓ PASS' : '✗ FAIL'} (range: 3.2-3.4V)`);
       results['VSC_V'] = { passed, value: `${voltage}V` };
     }
-    
+
     // Check for VMC_V voltage (pass if between 3.2V and 3.4V)
     // Match patterns like "VMC: 3.298" or "VMC_V: 3.298"
     const vmcMatch = message.match(/VMC(?:_V)?:\s*([\d.]+)/i);
@@ -137,37 +139,40 @@ const Index = () => {
       console.log(`VMC_V: ${voltage}V - ${passed ? '✓ PASS' : '✗ FAIL'} (range: 3.2-3.4V)`);
       results['VMC_V'] = { passed, value: `${voltage}V` };
     }
-    
+
     console.log('Parsed results:', results);
     console.log('======================');
     return results;
   };
-  
-  
+
+
   const handlePass = async () => {
     // Reset to PCB 1 at start
     setActivePCB(1);
-    
+    // Reset rolling parser carry for a clean new run
+    parserCarryRef.current = '';
+
     toast({
       title: "Starting Flash Process",
       description: "Processing all PCBs in sequence...",
     });
-    
+
     try {
       // IMPORTANT: Replace this with your Raspberry Pi's IP address
       // Find it by running: hostname -I
       const RPI_IP = '192.168.1.212'; // e.g., '192.168.1.100'
       const apiUrl = `http://${RPI_IP}:3001/api/flash-progress`;
-      
+
       const eventSource = new EventSource(apiUrl);
 
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        
+
         // Capture raw terminal output
         if (data.type === 'raw_output') {
-          console.log('📥 RAW MESSAGE RECEIVED:', data.message);
-          const formatted = data.message
+          const rawChunk = typeof data.message === 'string' ? data.message : String(data.message ?? '');
+          console.log('📥 RAW MESSAGE RECEIVED:', rawChunk);
+          const formatted = rawChunk
             .replace(/\. /g, '.\n')  // Line break after periods
             .replace(/MCU reset reasons:/g, '\n🔄 MCU reset reasons:')
             .replace(/RTC initialized/g, '✓ RTC initialized')
@@ -195,12 +200,14 @@ const Index = () => {
             .replace(/BLE adv name/g, '\n📡 BLE adv name')
             .replace(/BLE on/g, '\n✓ BLE on')
             .trim();
-          
+
           setTerminalMessages(prev => [...prev, ...formatted.split('\n').filter(m => m.trim().length > 0)]);
           setTimeout(() => terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-          
+
           // Parse and update test results for currently processing PCB
-          const testUpdates = parseTestResults(data.message);
+          const chunkForParsing = `${parserCarryRef.current}${rawChunk}`;
+          parserCarryRef.current = chunkForParsing.slice(-500);
+          const testUpdates = parseTestResults(chunkForParsing);
           if (Object.keys(testUpdates).length > 0) {
             console.log('🔄 APPLYING TEST UPDATES');
             console.log('Current processing PCB:', currentProcessingPCBRef.current);
