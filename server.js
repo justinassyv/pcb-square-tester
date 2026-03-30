@@ -104,11 +104,13 @@ app.get('/api/flash-progress', (req, res) => {
     }
 
     // Parse success - UART data was parsed and saved
-    if (/Parsed data saved to/i.test(normalizedScope) && currentPCB > 0) {
-      const savedMatch = parseScope.match(/Parsed data saved to\s+([^\s]+\.txt)/i);
-      const reportFile = savedMatch?.[1];
+    const savedMatch = parseScope.match(/Parsed data saved to\s+([^\s]+\.txt)/i);
+    if (savedMatch) {
+      const channelSwitchedInThisChunk = currentPCB !== previousPCB;
+      const pcbForParsed = channelSwitchedInThisChunk ? (previousPCB || currentPCB) : currentPCB;
+      const reportFile = savedMatch[1];
 
-      if (reportFile) {
+      if (pcbForParsed > 0 && reportFile) {
         const reportPath = join(reportsDir, reportFile);
         fs.readFile(reportPath, 'utf8')
           .then((content) => {
@@ -117,17 +119,17 @@ app.get('/api/flash-progress', (req, res) => {
 
             res.write(`data: ${JSON.stringify({
               type: 'parsed_report',
-              pcb: currentPCB,
+              pcb: pcbForParsed,
               exFlashInitialized,
             })}\n\n`);
             res.flush?.();
-            emitFlashComplete(currentPCB);
+            emitFlashComplete(pcbForParsed);
           })
           .catch(() => {
-            emitFlashComplete(currentPCB);
+            emitFlashComplete(pcbForParsed);
           });
-      } else {
-        emitFlashComplete(currentPCB);
+      } else if (pcbForParsed > 0) {
+        emitFlashComplete(pcbForParsed);
       }
     }
 

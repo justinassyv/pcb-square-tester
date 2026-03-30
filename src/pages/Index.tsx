@@ -304,8 +304,8 @@ const Index = () => {
               const idx = pcbNum - 1;
               next[idx] = next[idx].map(test => {
                 if (test.name !== 'exFlash initialized') return test;
-                if (typeof data.exFlashInitialized !== 'boolean') return test;
-                return { ...test, passed: data.exFlashInitialized };
+                if (data.exFlashInitialized === true) return { ...test, passed: true };
+                return test;
               });
               return next;
             });
