@@ -52,11 +52,18 @@ app.get('/api/flash-progress', (req, res) => {
     res.flush?.();
     
     // Parse which channel is being selected (extract the channel number)
-    const channelMatch = output.match(/=== Selecting channel (\d+) ===/);
+    const channelMatch = output.match(/===\s*Selecting\s+channel\s+(\d+)\s*===/i);
     if (channelMatch) {
-      currentPCB = parseInt(channelMatch[1]);
+      currentPCB = parseInt(channelMatch[1], 10);
       console.log(`\n🔄 Processing PCB ${currentPCB}...`);
       res.write(`data: ${JSON.stringify({ type: 'flashing', pcb: currentPCB })}\n\n`);
+      res.flush?.();
+    }
+
+    // Explicit exFlash detection from backend stream (often appears before reset/UART read)
+    const exFlashDetected = /ex\s*flash[^\n\r]{0,100}initialized/i.test(output) || /ex\s*flash[^\n\r]{0,120}size\s*\d+\s*kb/i.test(output);
+    if (currentPCB > 0 && exFlashDetected) {
+      res.write(`data: ${JSON.stringify({ type: 'exflash_detected', pcb: currentPCB })}\n\n`);
       res.flush?.();
     }
     
