@@ -284,8 +284,20 @@ const Index = () => {
             description: `Flashing PCB ${pcbNum}...`,
             duration: 1500,
           });
+        } else if (data.type === 'exflash_detected') {
+          const pcbNum = parseInt(data.pcb, 10);
+          if (!Number.isNaN(pcbNum) && pcbNum >= 1 && pcbNum <= 6) {
+            setPcbTestResults(prevResults => {
+              const next = [...prevResults];
+              const idx = pcbNum - 1;
+              next[idx] = next[idx].map(test =>
+                test.name === 'exFlash initialized' ? { ...test, passed: true } : test
+              );
+              return next;
+            });
+          }
         } else if (data.type === 'flash_complete') {
-          const pcbNum = parseInt(data.pcb);
+          const pcbNum = parseInt(data.pcb, 10);
           
           // Check if all REQUIRED tests passed for this PCB
           setPcbTestResults(currentTestResults => {
