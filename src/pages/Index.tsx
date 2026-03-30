@@ -122,12 +122,26 @@ const Index = () => {
       results['PSRAM initialized'] = { passed: true };
     }
 
+    const canonicalMessage = normalizedMessage
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+
+    const hasCanonicalExFlash =
+      canonicalMessage.includes('exflash initialized')
+      || canonicalMessage.includes('extflash initialized')
+      || canonicalMessage.includes('external flash initialized')
+      || canonicalMessage.includes('exflash size')
+      || canonicalMessage.includes('extflash size')
+      || canonicalMessage.includes('external flash size');
+
     if (
       /(?:^|\b)(?:ex|ext|external)\s*flash[^a-zA-Z0-9]{0,20}(?:initialized|init(?:ialized)?|ready|detected)\b/i.test(normalizedMessage)
       || /(?:^|\b)(?:ex|ext|external)\s*flash[^\n\r]{0,120}(?:size|capacity)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:kb|mb)\b/i.test(normalizedMessage)
       || /\bextflash\b[^\n\r]{0,80}(?:initialized|size|capacity)\b/i.test(normalizedMessage)
       || /(?:^|\b)(?:ex|ext|external)\s*flash\s*[:=-][^\n\r]{0,80}\b\d+(?:\.\d+)?\s*(?:kb|mb)\b/i.test(normalizedMessage)
       || /\b(?:ex|ext|external)flash[_\s-]*initialized\s*[:=]\s*(?:true|1|yes|ok|pass(?:ed)?)\b/i.test(normalizedMessage)
+      || hasCanonicalExFlash
     ) {
       results['exFlash initialized'] = { passed: true };
     }
@@ -187,7 +201,7 @@ const Index = () => {
           const rawChunk = typeof data.message === 'string' ? data.message : String(data.message ?? '');
 
           // Keep channel attribution correct even if SSE "flashing" arrives late or lines are chunked
-          const inlineChannelMatch = rawChunk.match(/===\s*Selecting\s+channel\s+(\d+)\s*===/i);
+          const inlineChannelMatch = rawChunk.match(/(?:===\s*)?select(?:ing)?\s+channel\s+(\d+)(?:\s*===)?/i);
           if (inlineChannelMatch) {
             const detectedChannel = parseInt(inlineChannelMatch[1], 10);
             if (!Number.isNaN(detectedChannel)) {
@@ -234,7 +248,7 @@ const Index = () => {
           // Parse and update test results for currently processing PCB
           const chunkForParsing = `${parserCarryRef.current}${rawChunk}`;
           // Keep only a short boundary tail to bridge split tokens without cross-channel contamination
-          parserCarryRef.current = rawChunk.slice(-140);
+          parserCarryRef.current = rawChunk.slice(-512);
           const testUpdates = parseTestResults(chunkForParsing);
           if (Object.keys(testUpdates).length > 0) {
             console.log('🔄 APPLYING TEST UPDATES');

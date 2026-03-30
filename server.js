@@ -74,6 +74,14 @@ app.get('/api/flash-progress', (req, res) => {
 
   const hasExFlashSignal = (text) => exFlashPatterns.some((pattern) => pattern.test(text));
 
+  const emitPendingExFlashForCurrentPCB = () => {
+    if (currentPCB <= 0 || pendingExFlashDetections <= 0 || exFlashDetectedPCBs.has(currentPCB)) return;
+    pendingExFlashDetections -= 1;
+    exFlashDetectedPCBs.add(currentPCB);
+    res.write(`data: ${JSON.stringify({ type: 'exflash_detected', pcb: currentPCB })}\n\n`);
+    res.flush?.();
+  };
+
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
 
@@ -85,7 +93,7 @@ app.get('/api/flash-progress', (req, res) => {
     const normalizedCombined = normalizeStreamText(combined);
 
     // Parse channel robustly even when the marker line is split across stdout chunks
-    const channelRegex = /===\s*Selecting\s+channel\s+(\d+)\s*===/gi;
+    const channelRegex = /(?:===\s*)?select(?:ing)?\s+channel\s+(\d+)(?:\s*===)?/gi;
     let match;
     let latestChannel = null;
     while ((match = channelRegex.exec(normalizedCombined)) !== null) {
@@ -98,13 +106,16 @@ app.get('/api/flash-progress', (req, res) => {
       console.log(`\n🔄 Processing PCB ${currentPCB}...`);
       res.write(`data: ${JSON.stringify({ type: 'flashing', pcb: currentPCB })}\n\n`);
       res.flush?.();
+      emitPendingExFlashForCurrentPCB();
+    }
 
-      if (pendingExFlashDetections > 0 && !exFlashDetectedPCBs.has(currentPCB)) {
-        pendingExFlashDetections -= 1;
-        exFlashDetectedPCBs.add(currentPCB);
-        res.write(`data: ${JSON.stringify({ type: 'exflash_detected', pcb: currentPCB })}\n\n`);
-        res.flush?.();
-      }
+    // Fallback for first device: some rigs print exFlash line before any explicit channel banner.
+    if (currentPCB <= 0 && pendingExFlashDetections > 0 && /\b(?:sonora\s+starting|mcu\s+reset\s+reasons|rtc\s+initialized)\b/i.test(normalizedCombined)) {
+      currentPCB = 1;
+      console.log(`\n🔄 Processing PCB ${currentPCB} (inferred before channel banner)...`);
+      res.write(`data: ${JSON.stringify({ type: 'flashing', pcb: currentPCB })}\n\n`);
+      res.flush?.();
+      emitPendingExFlashForCurrentPCB();
     }
 
     // If channel just changed, don't let previous channel carry-over trigger exFlash on the new PCB
