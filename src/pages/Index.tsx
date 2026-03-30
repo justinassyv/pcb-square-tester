@@ -179,6 +179,19 @@ const Index = () => {
         // Capture raw terminal output
         if (data.type === 'raw_output') {
           const rawChunk = typeof data.message === 'string' ? data.message : String(data.message ?? '');
+
+          // Keep channel attribution correct even if SSE "flashing" arrives late or lines are chunked
+          const inlineChannelMatch = rawChunk.match(/===\s*Selecting\s+channel\s+(\d+)\s*===/i);
+          if (inlineChannelMatch) {
+            const detectedChannel = parseInt(inlineChannelMatch[1], 10);
+            if (!Number.isNaN(detectedChannel)) {
+              currentProcessingPCBRef.current = detectedChannel;
+              setActivePCB(detectedChannel);
+              // Reset carry on channel boundary to avoid previous channel text being re-parsed on new channel
+              parserCarryRef.current = '';
+            }
+          }
+
           console.log('📥 RAW MESSAGE RECEIVED:', rawChunk);
           const formatted = rawChunk
             .replace(/\. /g, '.\n')  // Line break after periods
@@ -214,7 +227,8 @@ const Index = () => {
 
           // Parse and update test results for currently processing PCB
           const chunkForParsing = `${parserCarryRef.current}${rawChunk}`;
-          parserCarryRef.current = chunkForParsing.slice(-500);
+          // Keep only a short boundary tail to bridge split tokens without cross-channel contamination
+          parserCarryRef.current = rawChunk.slice(-140);
           const testUpdates = parseTestResults(chunkForParsing);
           if (Object.keys(testUpdates).length > 0) {
             console.log('🔄 APPLYING TEST UPDATES');
