@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import os from 'os';
+import { promises as fs } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -45,6 +46,7 @@ app.get('/api/flash-progress', (req, res) => {
   let currentPCB = 0; // Track current PCB being processed (will increment to 1 on first device)
   let stdoutCarry = '';
   const exFlashDetectedPCBs = new Set();
+  const flashCompletedPCBs = new Set();
 
   const normalizeStreamText = (text) =>
     text
@@ -52,6 +54,14 @@ app.get('/api/flash-progress', (req, res) => {
       .replace(/[\r\n\t]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+
+  const emitFlashComplete = (pcb) => {
+    if (pcb <= 0 || flashCompletedPCBs.has(pcb)) return;
+    flashCompletedPCBs.add(pcb);
+    console.log(`✅ PCB ${pcb} - Test PASSED`);
+    res.write(`data: ${JSON.stringify({ type: 'flash_complete', pcb })}\n\n`);
+    res.flush?.();
+  };
 
   pythonProcess.stdout.on('data', (data) => {
     const output = data.toString();
@@ -94,10 +104,33 @@ app.get('/api/flash-progress', (req, res) => {
     }
 
     // Parse success - UART data was parsed and saved
-    if (/Parsed data saved to/i.test(normalizedScope)) {
-      console.log(`✅ PCB ${currentPCB} - Test PASSED`);
-      res.write(`data: ${JSON.stringify({ type: 'flash_complete', pcb: currentPCB })}\n\n`);
-      res.flush?.();
+    const savedMatch = parseScope.match(/Parsed data saved to\s+([^\s]+\.txt)/i);
+    if (savedMatch) {
+      const channelSwitchedInThisChunk = currentPCB !== previousPCB;
+      const pcbForParsed = channelSwitchedInThisChunk ? (previousPCB || currentPCB) : currentPCB;
+      const reportFile = savedMatch[1];
+
+      if (pcbForParsed > 0 && reportFile) {
+        const reportPath = join(reportsDir, reportFile);
+        fs.readFile(reportPath, 'utf8')
+          .then((content) => {
+            const exFlashInitialized = /^exFlash_initialized:\s*true\s*$/im.test(content)
+              || /^exFlash_size_kb:\s*\d+\s*$/im.test(content);
+
+            res.write(`data: ${JSON.stringify({
+              type: 'parsed_report',
+              pcb: pcbForParsed,
+              exFlashInitialized,
+            })}\n\n`);
+            res.flush?.();
+            emitFlashComplete(pcbForParsed);
+          })
+          .catch(() => {
+            emitFlashComplete(pcbForParsed);
+          });
+      } else if (pcbForParsed > 0) {
+        emitFlashComplete(pcbForParsed);
+      }
     }
 
     // Parse failure - No UART data received

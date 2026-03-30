@@ -296,6 +296,20 @@ const Index = () => {
               return next;
             });
           }
+        } else if (data.type === 'parsed_report') {
+          const pcbNum = parseInt(data.pcb, 10);
+          if (!Number.isNaN(pcbNum) && pcbNum >= 1 && pcbNum <= 6) {
+            setPcbTestResults(prevResults => {
+              const next = [...prevResults];
+              const idx = pcbNum - 1;
+              next[idx] = next[idx].map(test => {
+                if (test.name !== 'exFlash initialized') return test;
+                if (data.exFlashInitialized === true) return { ...test, passed: true };
+                return test;
+              });
+              return next;
+            });
+          }
         } else if (data.type === 'flash_complete') {
           const pcbNum = parseInt(data.pcb, 10);
           
