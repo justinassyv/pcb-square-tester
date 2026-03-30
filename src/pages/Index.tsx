@@ -87,38 +87,46 @@ const Index = () => {
     console.log('=== PARSING MESSAGE ===');
     console.log('Original:', message);
 
-    if (message.includes('RTC initialized')) results['RTC initialized'] = { passed: true };
+    const normalizedMessage = message
+      .replace(/\x1B\[[0-9;]*[A-Za-z]/g, ' ')
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (/RTC\s+initialized/i.test(normalizedMessage)) results['RTC initialized'] = { passed: true };
 
     // Check for LACC - look for the specific pattern
-    if (/lacc\s+(failed|error)/i.test(message)) {
+    if (/lacc\s+(failed|error)/i.test(normalizedMessage)) {
       console.log('✗ LACC FAILED');
       results['LACC initialized'] = { passed: false };
-    } else if (/lacc\s+initialized/i.test(message)) {
+    } else if (/lacc\s+initialized/i.test(normalizedMessage)) {
       console.log('✓ LACC SUCCESS');
       results['LACC initialized'] = { passed: true };
     }
 
     // Check for HACC - look for the specific pattern
-    if (/hacc\s+(failed|error)/i.test(message)) {
+    if (/hacc\s+(failed|error)/i.test(normalizedMessage)) {
       console.log('✗ HACC FAILED');
       results['HACC initialized'] = { passed: false };
-    } else if (/hacc\s+initialized/i.test(message)) {
+    } else if (/hacc\s+initialized/i.test(normalizedMessage)) {
       console.log('✓ HACC SUCCESS');
       results['HACC initialized'] = { passed: true };
     }
 
     // Check for PSRAM - look for the specific pattern
-    if (/psram\s+(failed|error)/i.test(message)) {
+    if (/psram\s+(failed|error)/i.test(normalizedMessage)) {
       console.log('✗ PSRAM FAILED');
       results['PSRAM initialized'] = { passed: false };
-    } else if (/psram\s+initialized/i.test(message)) {
+    } else if (/psram\s+initialized/i.test(normalizedMessage)) {
       console.log('✓ PSRAM SUCCESS');
       results['PSRAM initialized'] = { passed: true };
     }
 
-    if (/ex\s*flash\s+initialized/i.test(message)) results['exFlash initialized'] = { passed: true };
-    if (/Ext\s+NFC\s+configur/i.test(message)) results['Ext NFC configured'] = { passed: true };
-    if (/Ext\s+NFC\s+initialized/i.test(message)) results['Ext NFC initialized'] = { passed: true };
+    if (/ex\s*flash[^a-zA-Z0-9]{0,8}initialized/i.test(normalizedMessage) || /ex\s*flash[^\n\r]{0,80}size\s*\d+\s*kb/i.test(normalizedMessage)) {
+      results['exFlash initialized'] = { passed: true };
+    }
+    if (/Ext\s+NFC\s+configur/i.test(normalizedMessage)) results['Ext NFC configured'] = { passed: true };
+    if (/Ext\s+NFC\s+initialized/i.test(normalizedMessage)) results['Ext NFC initialized'] = { passed: true };
 
     // Check for VSC_V voltage (pass if between 3.2V and 3.4V)
     // Match patterns like "VSC: 3.291" or "VSC_V: 3.291"
