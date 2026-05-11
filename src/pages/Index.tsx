@@ -459,8 +459,10 @@ const Index = () => {
   
   const handleCancel = async () => {
     try {
-      // Use same RPI_IP as above
-      const RPI_IP = '192.168.1.212'; // e.g., '192.168.1.100'
+      const host = window.location.hostname;
+      const RPI_IP = (!host || host.endsWith('lovable.app') || host.endsWith('lovableproject.com'))
+        ? '192.168.1.212'
+        : host;
       const apiUrl = `http://${RPI_IP}:3001/api/kill-process`;
       
       await fetch(apiUrl, { method: 'POST' });
