@@ -186,9 +186,12 @@ const Index = () => {
     });
 
     try {
-      // IMPORTANT: Replace this with your Raspberry Pi's IP address
-      // Find it by running: hostname -I
-      const RPI_IP = '192.168.1.212'; // e.g., '192.168.1.100'
+      // Use the same hostname the UI is loaded from, so it works on any network.
+      // Falls back to 192.168.1.212 only when opened via the Lovable preview domain.
+      const host = window.location.hostname;
+      const RPI_IP = (!host || host.endsWith('lovable.app') || host.endsWith('lovableproject.com'))
+        ? '192.168.1.212'
+        : host;
       const apiUrl = `http://${RPI_IP}:3001/api/flash-progress`;
 
       const eventSource = new EventSource(apiUrl);
